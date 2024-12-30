@@ -1,0 +1,120 @@
+---
+- name: Install Docker, Repmgr, PostgreSQL, Kubernetes
+  hosts: all
+  become: yes
+  vars:
+    docker_packages:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+    k8s_packages:
+      - kubelet
+      - kubeadm
+      - kubectl
+    postgres_version: "14"
+    repmgr_version: "5.2"
+    vms:
+      - { name: "vm1", ip: "192.168.1.101", role: "primary" }
+      - { name: "vm2", ip: "192.168.1.102", role: "standby" }
+      - { name: "vm3", ip: "192.168.1.103", role: "standby" }
+
+  tasks:
+    - name: Install prerequisites
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+
+    - name: Add Docker repository
+      shell: |
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
+        apt-get update
+      args:
+        warn: false
+
+    - name: Install Docker
+      apt:
+        name: "{{ docker_packages }}"
+        state: present
+
+    - name: Add Kubernetes repository
+      shell: |
+        curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+        echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list
+        apt-get update
+      args:
+        warn: false
+
+    - name: Install Kubernetes packages
+      apt:
+        name: "{{ k8s_packages }}"
+        state: present
+      notify:
+        - Restart kubelet
+
+    - name: Disable swap for Kubernetes
+      shell: |
+        swapoff -a
+        sed -i '/ swap / s/^/#/' /etc/fstab
+
+    - name: Install PostgreSQL
+      apt:
+        name:
+          - postgresql-{{ postgres_version }}
+          - postgresql-server-dev-{{ postgres_version }}
+        state: present
+
+    - name: Install Repmgr
+      apt:
+        name:
+          - repmgr-{{ repmgr_version }}
+        state: present
+
+    - name: Configure Repmgr on primary node
+      when: "item.role == 'primary'"
+      with_items: "{{ vms }}"
+      block:
+        - name: Setup Repmgr config for primary
+          copy:
+            dest: /etc/repmgr/repmgr.conf
+            content: |
+              node_id=1
+              node_name={{ item.name }}
+              conninfo='host={{ item.ip }} user=repmgr dbname=repmgr'
+              data_directory='/var/lib/postgresql/{{ postgres_version }}/main'
+
+        - name: Initialize primary node
+          shell: |
+            sudo -u postgres repmgr -f /etc/repmgr/repmgr.conf primary register
+
+    - name: Configure Repmgr on standby nodes
+      when: "item.role == 'standby'"
+      with_items: "{{ vms }}"
+      block:
+        - name: Setup Repmgr config for standby
+          copy:
+            dest: /etc/repmgr/repmgr.conf
+            content: |
+              node_id={{ loop.index + 1 }}
+              node_name={{ item.name }}
+              conninfo='host={{ item.ip }} user=repmgr dbname=repmgr'
+              data_directory='/var/lib/postgresql/{{ postgres_version }}/main'
+
+        - name: Clone standby from primary
+          shell: |
+            sudo -u postgres repmgr -h {{ vms[0].ip }} -U repmgr -d repmgr standby clone
+
+        - name: Register standby node
+          shell: |
+            sudo -u postgres repmgr -f /etc/repmgr/repmgr.conf standby register
+
+  handlers:
+    - name: Restart kubelet
+      service:
+        name: kubelet
+        state: restarted
