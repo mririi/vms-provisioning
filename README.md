@@ -1,5 +1,8 @@
 #generate ssh key
-ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa -N ""
+ssh-keygen -t rsa -b 4096 -C "ansible"
+ 
+#copy the sshkey to the recieving vm
+ssh-copy-id -i ~/.ssh/id_rsa.pub user@target_host
 
 #Test connectivity
 ansible all --key-file ~/.ssh/id_rsa -i inventory.yml -m ping
