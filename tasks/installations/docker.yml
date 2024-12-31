@@ -39,7 +39,7 @@
       when: docker_installed.rc != 0
 
     - name: Add user to Docker group to allow non-sudo usage
-      command: usermod -aG docker {{ ansible_user }}
+      command: usermod -aG docker {{ ansible_user_id }}
       when: docker_installed.rc != 0
 
     - name: Refresh group membership
