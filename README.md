@@ -1,3 +1,14 @@
+# Steps
+## create vault
+```
+ansible-vault create secret.yml
+```
+### run a playbook
+```
+ansible-playbook -i inventory.yml playbook.yml --ask-become-pass --ask-vault-pass
+```
+
+# Useful commands
 #generate ssh key
 ssh-keygen -t rsa -b 4096 -C "ansible"
  
