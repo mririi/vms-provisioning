@@ -1,3 +1,7 @@
 ---
+    - name: Install required packages
+      apt:
+        name: mailutils
+        state: present
     - name: Send email notification
       shell: echo "The Ansible playbook has completed successfully on {{ inventory_hostname }}" | mail -s "Ansible Playbook Execution Complete" wassim.mriri@b2m-it.com
