@@ -1,3 +1,6 @@
+#generate ssh key
+ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa -N ""
+
 #Test connectivity
 ansible all --key-file ~/.ssh/id_rsa -i inventory.yml -m ping
 
