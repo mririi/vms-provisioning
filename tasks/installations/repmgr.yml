@@ -4,51 +4,19 @@
   register: repmgr_installed
   ignore_errors: true
 
-- name: Install prerequisites if repmgr is not installed
+- name: Add 2ndQuadrant repository
+  shell: curl https://dl.2ndquadrant.com/default/release/get/deb | bash
+  args:
+    creates: /etc/apt/sources.list.d/2ndquadrant.list
+  # when: repmgr_installed.rc != 0
+
+- name: Update apt cache
   apt:
-    name:
-      - flex
-      - libedit-dev
-      - libkrb5-dev
-      - libpam0g-dev
-      - libreadline-dev
-      - libselinux1-dev
-      - libssl-dev
-      - libxml2-dev
-      - libxslt1-dev
-      - build-essential
-      - postgresql-server-dev-14
-      - liblz4-dev 
-      - zlib1g-dev
+    update_cache: yes
+  when: repmgr_installed.rc != 0
+
+- name: Install repmgr for PostgreSQL 14
+  apt:
+    name: postgresql-14-repmgr
     state: present
   when: repmgr_installed.rc != 0
-
-- name: Download repmgr source code
-  get_url:
-    url: https://repmgr.org/download/repmgr-5.3.3.tar.gz
-    dest: /tmp/repmgr-5.3.3.tar.gz
-  when: repmgr_installed.rc != 0
-
-- name: Extract repmgr source code
-  unarchive:
-    src: /tmp/repmgr-5.3.3.tar.gz
-    dest: /tmp/
-    remote_src: yes
-  when: repmgr_installed.rc != 0
-
-- name: Configure and install repmgr
-  shell: |
-    cd /tmp/repmgr-5.3.3 &&
-    ./configure &&
-    make &&
-    make install
-  when: repmgr_installed.rc != 0
-
-- name: Check repmgr service status
-  shell: systemctl status repmgr
-  register: repmgr_status
-  ignore_errors: true
-
-- name: Debug repmgr service status
-  debug:
-    msg: "Repmgr service status: {{ repmgr_status.stdout }}"
