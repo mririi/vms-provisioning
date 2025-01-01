@@ -1,53 +1,64 @@
 ---
-    - name: Check if Docker is installed
-      shell: dpkg -l | grep docker
-      register: docker_installed
-      ignore_errors: true
+- name: Check if Docker is installed
+  shell: dpkg -l | grep docker
+  register: docker_installed
+  ignore_errors: true
 
-    - name: Install prerequisites if Docker is not installed
-      apt:
-        name:
-          - apt-transport-https
-          - ca-certificates
-          - curl
-          - software-properties-common
-        state: present
-      when: docker_installed.rc != 0
+- name: Install prerequisites if Docker is not installed
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+    state: present
+  when: docker_installed.rc != 0
 
-    - name: Add Docker GPG key
-      command: >
-        bash -c "curl -fsSL https://download.docker.com/linux/ubuntu/gpg |
-        gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg"
-      args:
-        creates: /usr/share/keyrings/docker-archive-keyring.gpg
-      when: docker_installed.rc != 0
+- name: Add Docker GPG key
+  command: >
+    bash -c "curl -fsSL https://download.docker.com/linux/ubuntu/gpg |
+    gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg"
+  args:
+    creates: /usr/share/keyrings/docker-archive-keyring.gpg
+  when: docker_installed.rc != 0
 
-    - name: Add Docker repository
-      shell: |
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
-      when: docker_installed.rc != 0
+- name: Add Docker repository
+  shell: |
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
+  when: docker_installed.rc != 0
 
-    - name: Update apt cache
-      apt:
-        update_cache: yes
-      when: docker_installed.rc != 0
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  when: docker_installed.rc != 0
 
-    - name: Install Docker
-      apt:
-        name: docker-ce
-        state: present
-      when: docker_installed.rc != 0
+- name: Install Docker
+  apt:
+    name: docker-ce
+    state: present
+  when: docker_installed.rc != 0
+  
+- name: Run a command to verify Docker group membership
+  shell: sg docker -c "id -nG"
+  register: group_refresh
+  changed_when: false
 
-    - name: Add user to Docker group to allow non-sudo usage
-      command: usermod -aG docker {{ ansible_user_id }}
-      when: docker_installed.rc != 0
+- name: Add user to Docker group to allow non-sudo usage
+  command: usermod -aG docker {{ ansible_user_id }}
+  when: group_refresh.rc != 0
 
-    - name: Refresh group membership
-      command: newgrp docker
-      when: docker_installed.rc != 0
+# - name: Refresh group membership
+#   command: newgrp docker
+#   when: docker_installed.rc != 0
 
-    - name: Check Docker service status
-      systemd:
-        name: docker
-        state: started
-        enabled: yes
+- name: Display message to log out and back in
+  debug:
+    msg: "Log out and log back in for group membership changes to take effect."
+  when: group_refresh.rc != 0
+
+- name: Check Docker service status
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
