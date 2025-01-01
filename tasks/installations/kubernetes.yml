@@ -1,1 +1,57 @@
 ---
+    - name: Update apt package list
+      apt:
+        update_cache: yes
+
+    - name: Ensure dependencies are installed
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gpg
+        state: present
+
+    - name: Add Kubernetes GPG key
+      ansible.builtin.command:
+        cmd: curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | gpg --dearmor
+      register: gpg_output
+
+    - name: Write Kubernetes GPG key to keyring
+      copy:
+        content: "{{ gpg_output.stdout }}"
+        dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Add Kubernetes repository
+      ansible.builtin.command:
+        cmd: echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' > /etc/apt/sources.list.d/kubernetes.list
+
+    - name: Update apt package list after adding Kubernetes repo
+      apt:
+        update_cache: yes
+
+    - name: Install kubelet, kubeadm, kubectl
+      apt:
+        name:
+          - kubelet
+          - kubeadm
+          - kubectl
+        state: present
+
+    - name: Hold kubelet, kubeadm, and kubectl to prevent upgrades
+      apt:
+        name:
+          - kubelet
+          - kubeadm
+          - kubectl
+        state: present
+        mark: hold
+
+    - name: Enable and start kubelet service
+      systemd:
+        name: kubelet
+        enabled: true
+        state: started
