@@ -15,8 +15,8 @@
     update_cache: yes
   when: repmgr_installed.rc != 0
 
-- name: Install repmgr for PostgreSQL 14
+- name: Install repmgr for PostgreSQL 12
   apt:
-    name: postgresql-14-repmgr
+    name: postgresql-12-repmgr
     state: present
   when: repmgr_installed.rc != 0
