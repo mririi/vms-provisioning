@@ -8,7 +8,7 @@
   shell: curl https://dl.2ndquadrant.com/default/release/get/deb | bash
   args:
     creates: /etc/apt/sources.list.d/2ndquadrant.list
-  # when: repmgr_installed.rc != 0
+# when: repmgr_installed.rc != 0
 
 - name: Update apt cache
   apt:
