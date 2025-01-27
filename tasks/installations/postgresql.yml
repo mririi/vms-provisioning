@@ -17,10 +17,11 @@
       - lsb-release
       - ca-certificates
     state: present
+    update_cache: yes
   when: postgres_installed.rc != 0
 
 - name: Add PostgreSQL GPG key
-  command: >
+  ansible.builtin.command: >
     bash -c "curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc |
     gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg"
   args:
@@ -28,8 +29,10 @@
   when: postgres_installed.rc != 0
 
 - name: Add PostgreSQL repository
-  shell: |
+  ansible.builtin.shell: |
     echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+  args:
+    creates: /etc/apt/sources.list.d/pgdg.list
   when: postgres_installed.rc != 0
 
 - name: Update apt cache
@@ -43,7 +46,7 @@
     state: present
   when: postgres_installed.rc != 0
 
-- name: Check PostgreSQL service status
+- name: Ensure PostgreSQL service is started and enabled
   systemd:
     name: postgresql
     state: started
