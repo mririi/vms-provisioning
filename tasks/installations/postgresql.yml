@@ -1,6 +1,6 @@
 ---
-- name: Check if PostgreSQL 14 is installed
-  shell: dpkg -l | grep postgresql-14
+- name: Check if PostgreSQL 12 is installed
+  shell: dpkg -l | grep postgresql-12
   register: postgres_installed
   ignore_errors: true
 
@@ -37,9 +37,9 @@
     update_cache: yes
   when: postgres_installed.rc != 0
 
-- name: Install PostgreSQL 14
+- name: Install PostgreSQL 12
   apt:
-    name: postgresql-14
+    name: postgresql-12
     state: present
   when: postgres_installed.rc != 0
 
