@@ -1,0 +1,202 @@
+---
+- name: Configure and set up repmgr on the primary (master)
+  hosts: master_nodes
+  become: yes
+  vars:
+    repmgr_db: "repmgr"
+    repmgr_user: "repmgr"
+    repmgr_password: "my_strong_password"  # plaintext for demo
+    repmgr_config_path: "/etc/repmgr/12/repmgr.conf"
+    repmgr_service_name: "postgresql"
+    network_subnet: "192.168.1.0/24"
+
+  pre_tasks:
+    - name: Install required PostgreSQL python libraries (Debian/Ubuntu)
+      apt:
+        name: python3-psycopg2
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Create repmgr database
+      community.postgresql.postgresql_db:
+        name: "{{ repmgr_db }}"
+        state: present
+      become_user: postgres
+
+    - name: Create or update repmgr user with replication privileges
+      community.postgresql.postgresql_user:
+        name: "{{ repmgr_user }}"
+        password: "{{ repmgr_password }}"
+        db: "{{ repmgr_db }}"
+        role_attr_flags: 'LOGIN,REPLICATION'
+        state: present
+      become_user: postgres
+
+  tasks:
+    - name: Ensure PostgreSQL (master) listens on all interfaces
+      lineinfile:
+        path: /etc/postgresql/12/main/postgresql.conf
+        regexp: '^#?listen_addresses\s*=\s*.*'
+        line: "listen_addresses = '*'"
+        backup: yes
+      notify: Restart PostgreSQL
+
+    - name: Ensure pg_hba.conf on master allows repmgr from {{ network_subnet }}
+      blockinfile:
+        path: /etc/postgresql/12/main/pg_hba.conf
+        insertafter: '^# IPv4 local connections:'
+        block: |
+          # Allow repmgr user from the specified subnet
+          host  {{ repmgr_db }}   {{ repmgr_user }}  {{ network_subnet }}  md5
+          # Allow replication connections from the same subnet
+          host  replication       {{ repmgr_user }}  {{ network_subnet }}  md5
+      notify: Reload PostgreSQL
+
+    - name: Ensure /etc/repmgr/12 directory exists
+      file:
+        path: "/etc/repmgr/12"
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: '0755'
+
+    - name: Place repmgr.conf on master
+      template:
+        src: repmgr.conf.j2
+        dest: "{{ repmgr_config_path }}"
+        owner: postgres
+        group: postgres
+        mode: '0644'
+      vars:
+        node_id: "{{ repmgr_node_id }}"
+        node_name: "{{ repmgr_node_name }}"
+        conninfo: "host={{ ansible_host }} dbname={{ repmgr_db }} user={{ repmgr_user }} password={{ repmgr_password }}"
+        config_path_for_template: "{{ repmgr_config_path }}"
+        service_name: "{{ repmgr_service_name }}"
+
+    - name: Ensure PostgreSQL is started on master
+      systemd:
+        name: "{{ repmgr_service_name }}"
+        state: started
+        enabled: yes
+
+    - name: Register master node with repmgr
+      shell: >
+        sudo -u postgres repmgr
+        -f {{ repmgr_config_path }}
+        primary register --force
+      register: primary_register
+      failed_when: "primary_register.rc not in [0,1]"
+      changed_when: primary_register.rc == 0
+
+  handlers:
+    - name: Restart PostgreSQL
+      systemd:
+        name: "{{ repmgr_service_name }}"
+        state: restarted
+
+    - name: Reload PostgreSQL
+      systemd:
+        name: "{{ repmgr_service_name }}"
+        state: reloaded
+
+
+- name: Configure and set up repmgr on the standbys (workers)
+  hosts: worker_nodes
+  become: yes
+  vars:
+    repmgr_db: "repmgr"
+    repmgr_user: "repmgr"
+    repmgr_password: "my_strong_password"
+    repmgr_config_path: "/etc/repmgr/12/repmgr.conf"
+    repmgr_service_name: "postgresql"
+    network_subnet: "192.168.1.0/24"
+    # Master node IP
+    master_host: "{{ hostvars[groups['master_nodes'][0]].ansible_host }}"
+
+  tasks:
+    - name: Ensure PostgreSQL (standby) listens on all interfaces
+      lineinfile:
+        path: /etc/postgresql/12/main/postgresql.conf
+        regexp: '^#?listen_addresses\s*=\s*.*'
+        line: "listen_addresses = '*'"
+        backup: yes
+      notify: Restart PostgreSQL
+
+    - name: Ensure pg_hba.conf on standby allows repmgr from {{ network_subnet }}
+      blockinfile:
+        path: /etc/postgresql/12/main/pg_hba.conf
+        insertafter: '^# IPv4 local connections:'
+        block: |
+          # Allow repmgr user from the specified subnet
+          host  {{ repmgr_db }}   {{ repmgr_user }}  {{ network_subnet }}  md5
+          # Allow replication connections from the same subnet
+          host  replication       {{ repmgr_user }}  {{ network_subnet }}  md5
+      notify: Reload PostgreSQL
+
+    - name: Ensure /etc/repmgr/12 directory exists
+      file:
+        path: "/etc/repmgr/12"
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: '0755'
+
+    - name: Place repmgr.conf on standby
+      template:
+        src: repmgr.conf.j2
+        dest: "{{ repmgr_config_path }}"
+        owner: postgres
+        group: postgres
+        mode: '0644'
+      vars:
+        node_id: "{{ repmgr_node_id }}"
+        node_name: "{{ repmgr_node_name }}"
+        conninfo: "host={{ ansible_host }} dbname={{ repmgr_db }} user={{ repmgr_user }} password={{ repmgr_password }}"
+        config_path_for_template: "{{ repmgr_config_path }}"
+        service_name: "{{ repmgr_service_name }}"
+
+    - name: Stop PostgreSQL before cloning (if running)
+      systemd:
+        name: "{{ repmgr_service_name }}"
+        state: stopped
+      ignore_errors: true
+
+    - name: Clone standby from master
+      shell: >
+        sudo -u postgres repmgr
+        -h {{ master_host }}
+        -U {{ repmgr_user }}
+        -d {{ repmgr_db }}
+        --password={{ repmgr_password }}
+        -f {{ repmgr_config_path }}
+        standby clone
+      args:
+        creates: "/var/lib/postgresql/12/main/PG_VERSION"
+
+    - name: Start PostgreSQL on standby
+      systemd:
+        name: "{{ repmgr_service_name }}"
+        state: started
+        enabled: yes
+
+    - name: Register standby node with repmgr
+      shell: >
+        sudo -u postgres repmgr
+        -f {{ repmgr_config_path }}
+        standby register
+      register: standby_register
+      failed_when: "standby_register.rc not in [0,1]"
+      changed_when: standby_register.rc == 0
+
+  handlers:
+    - name: Restart PostgreSQL
+      systemd:
+        name: "{{ repmgr_service_name }}"
+        state: restarted
+
+    - name: Reload PostgreSQL
+      systemd:
+        name: "{{ repmgr_service_name }}"
+        state: reloaded
