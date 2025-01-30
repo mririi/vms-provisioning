@@ -1,0 +1,21 @@
+node_id={{ node_id }}
+node_name={{ node_name }}
+conninfo='{{ conninfo }}'
+data_directory='/var/lib/postgresql/12/main'
+pg_bindir='/usr/bin'
+
+# (Optional) If you keep this line, you'll see a warning unless you use
+# --copy-external-config-files when cloning:
+# config_directory='/etc/postgresql/12/main'
+
+failover=automatic
+
+promote_command='repmgr standby promote -f {{ config_path_for_template }} --log-to-file'
+follow_command='repmgr standby follow -f {{ config_path_for_template }} --log-to-file'
+
+service_start_command='systemctl start {{ service_name }}'
+service_stop_command='systemctl stop {{ service_name }}'
+service_restart_command='systemctl restart {{ service_name }}'
+service_reload_command='systemctl reload {{ service_name }}'
+
+log_file='/var/log/repmgr/repmgr.log'
