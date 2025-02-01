@@ -1,0 +1,3 @@
+---
+  - include_tasks: ./repmgr_primary.yml
+  - include_tasks: ./repmgr_standby.yml

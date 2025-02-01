@@ -1,68 +1,43 @@
 ---
-    - name: Update apt package list
-      apt:
-        update_cache: yes
+- name: Install prerequisites for Kubernetes
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gpg
+    state: present
+    update_cache: yes
 
-    - name: Ensure dependencies are installed
-      apt:
-        name:
-          - apt-transport-https
-          - ca-certificates
-          - curl
-          - gpg
-        state: present
+- name: Create the Kubernetes keyring directory
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
 
-    - name: Ensure /etc/apt/sources.list.d directory exists
-      file:
-        path: /etc/apt/sources.list.d
-        state: directory
-        mode: '0755'
+- name: Add Kubernetes GPG key
+  shell: |
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
-    - name: Ensure /etc/apt/keyrings directory exists
-      file:
-        path: /etc/apt/keyrings
-        state: directory
-        mode: '0755'
+- name: Add Kubernetes repository
+  shell: |
+    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' > /etc/apt/sources.list.d/kubernetes.list
+  args:
+    creates: /etc/apt/sources.list.d/kubernetes.list
 
-    - name: Download Kubernetes GPG key
-      get_url:
-        url: https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key
-        dest: /tmp/Release.key
+- name: Update apt cache after adding Kubernetes repository
+  apt:
+    update_cache: yes
 
-    - name: Add Kubernetes GPG key to keyring
-      command:
-        cmd: gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg /tmp/Release.key
-      args:
-        creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+- name: Install kubelet, kubeadm, and kubectl
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
 
-    - name: Add Kubernetes repository
-      copy:
-        dest: /etc/apt/sources.list.d/kubernetes.list
-        content: 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /'
-
-    - name: Update apt package list after adding Kubernetes repo
-      apt:
-        update_cache: yes
-
-    - name: Install kubelet, kubeadm, kubectl
-      apt:
-        name:
-          - kubelet
-          - kubeadm
-          - kubectl
-        state: present
-
-    - name: Hold kubelet, kubeadm, and kubectl to prevent upgrades
-      shell: |
-        apt-mark hold kubelet kubeadm kubectl
-
-    - name: Enable and start kubelet service
-      systemd:
-        name: kubelet
-        enabled: true
-        state: started
-
-    - name: Clean up temporary files
-      file:
-        path: /tmp/Release.key
-        state: absent
+- name: Mark kubelet, kubeadm, and kubectl to hold updates
+  shell: apt-mark hold kubelet kubeadm kubectl

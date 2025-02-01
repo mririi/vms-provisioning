@@ -3,21 +3,8 @@
   hosts: worker_nodes
   become: yes
 
-  vars:
-    # Basic settings
-    repmgr_db: "repmgr"
-    repmgr_user: "repmgr"
-    repmgr_password: "my_strong_password"   # store securely in production
-    repmgr_config_path: "/etc/repmgr/12/repmgr.conf"
-    repmgr_service_name: "postgresql"
-    network_subnet: "192.168.1.0/24"
-
-    # We assume the master's IP is the first host in the master_nodes group
-    master_host: "{{ hostvars[groups['master_nodes'][0]].ansible_host }}"
-
-    # Set to true if you want to use --copy-external-config-files
-    # (only if your repmgr version supports it and you keep config_directory)
-    copy_ext_config: false
+  vars_files:
+    - ../vars/repmgr.yml
 
   tasks:
     - name: Ensure PostgreSQL listens on all interfaces (standby)
@@ -55,7 +42,7 @@
 
     - name: Place repmgr.conf on standby
       template:
-        src: ../templates/repmgr.conf.j2
+        src: ../../templates/repmgr.conf.j2
         dest: "{{ repmgr_config_path }}"
         owner: postgres
         group: postgres

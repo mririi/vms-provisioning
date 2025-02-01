@@ -1,0 +1,44 @@
+---
+- name: Config Kuberenets on Master
+  hosts: master
+  become: yes
+  become_user: root
+  tasks:
+    - name: Pull kubeadm configuration images
+      command: kubeadm config images pull
+
+    #will be removed
+    - name: Bring down eth0 network interface
+      shell: ifdown eth0
+      register: ifdown_output
+      ignore_errors: yes  # Optional: If you want to continue even if the interface is already down
+    #will be removed
+    - name: Display ifdown output
+      debug:
+        msg: "{{ ifdown_output.stdout }}"
+
+    - name: Initialize the Kubernetes cluster
+      shell: |
+        kubeadm init --apiserver-advertise-address=192.168.100.98 --pod-network-cidr=10.244.0.0/16
+      register: kubeadm_init_output
+
+    - name: Display kubeadm initialization output
+      debug:
+        msg: "{{ kubeadm_init_output.stdout }}"
+
+    - name: Store Kubernetes initialization output to file
+      copy:
+        content: "{{ kubeadm_init_output.stdout }}"
+        dest: /tmp/kubeadm_join_cmd
+      become: true
+      delegate_to: localhost
+
+    - name: Set up kubeconfig for non-root user
+      shell: |
+        mkdir -p $HOME/.kube
+        cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+        chown $(id -u):$(id -g) $HOME/.kube/config
+      when: ansible_user != 'root'
+
+    - name: Apply Weave CNI
+      shell: kubectl apply -f https://reweave.azurewebsites.net/k8s/v1.30/net.yaml

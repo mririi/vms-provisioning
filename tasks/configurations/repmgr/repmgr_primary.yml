@@ -2,13 +2,8 @@
 - name: Configure and set up repmgr on the primary (master)
   hosts: master_nodes
   become: yes
-  vars:
-    repmgr_db: "repmgr"
-    repmgr_user: "repmgr"
-    repmgr_password: "my_strong_password"  # store securely in production
-    repmgr_config_path: "/etc/repmgr/12/repmgr.conf"
-    repmgr_service_name: "postgresql"
-    network_subnet: "192.168.1.0/24"
+  vars_files:
+    - ../vars/repmgr.yml
 
   pre_tasks:
     - name: Install required Python libraries (Debian/Ubuntu)
@@ -107,7 +102,7 @@
 
     - name: Place repmgr.conf on master
       template:
-        src: ../templates/repmgr.conf.j2
+        src: ../../templates/repmgr.conf.j2
         dest: "{{ repmgr_config_path }}"
         owner: postgres
         group: postgres
