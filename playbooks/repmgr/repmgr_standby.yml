@@ -26,6 +26,9 @@
           host  replication       {{ repmgr_user }}  {{ network_subnet }}  md5
       notify: Reload PostgreSQL
 
+    - name: Force handlers to execute immediately
+      meta: flush_handlers
+
     - name: Ensure /etc/repmgr/12 directory exists
       file:
         path: "/etc/repmgr/12"
@@ -42,7 +45,7 @@
 
     - name: Place repmgr.conf on standby
       template:
-        src: ../../templates/repmgr.conf.j2
+        src: ../templates/repmgr.conf.j2
         dest: "{{ repmgr_config_path }}"
         owner: postgres
         group: postgres

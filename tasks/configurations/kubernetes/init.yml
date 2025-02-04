@@ -1,3 +1,0 @@
----
-  - include_tasks: ./kube-config-master.yml
-  - include_tasks: ./kube-join-worker.yml

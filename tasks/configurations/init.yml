@@ -1,3 +1,0 @@
----
-  - include_tasks: ./repmgr/init.yml
-  - include_tasks: ./kubernetes/init.yml

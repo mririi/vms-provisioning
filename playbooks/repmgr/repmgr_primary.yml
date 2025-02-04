@@ -102,7 +102,7 @@
 
     - name: Place repmgr.conf on master
       template:
-        src: ../../templates/repmgr.conf.j2
+        src: ../templates/repmgr.conf.j2
         dest: "{{ repmgr_config_path }}"
         owner: postgres
         group: postgres

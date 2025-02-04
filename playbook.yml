@@ -1,8 +1,0 @@
----
-- name: Ensure Docker is installed and running
-  hosts: all
-  become: yes
-  tasks:
-    - include_tasks: tasks/installations/init.yml
-    - include_tasks: tasks/configurations/init.yml
-    # - include_tasks: tasks/others/init.yml
