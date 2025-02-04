@@ -26,8 +26,10 @@
           host  replication       {{ repmgr_user }}  {{ network_subnet }}  md5
       notify: Reload PostgreSQL
 
-    - name: Force handlers to execute immediately
-      meta: flush_handlers
+    - name: Restart PostgreSQL immediately
+      systemd:
+        name: "{{ repmgr_service_name }}"
+        state: restarted
 
     - name: Ensure /etc/repmgr/12 directory exists
       file:

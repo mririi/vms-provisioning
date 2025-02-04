@@ -79,7 +79,11 @@
         regexp: '^#?listen_addresses\s*=\s*.*'
         line: "listen_addresses = '*'"
         backup: yes
-      notify: Restart PostgreSQL
+      
+    - name: Restart PostgreSQL immediately
+      systemd:
+        name: "{{ repmgr_service_name }}"
+        state: restarted
 
     - name: Ensure pg_hba.conf on master allows repmgr from {{ network_subnet }}
       blockinfile:
