@@ -9,7 +9,7 @@
 
     #will be removed
     - name: Bring down eth0 network interface
-      shell: ifdown eth0
+      shell: /sbin/ifdown eth0
       register: ifdown_output
       ignore_errors: yes  # Optional: If you want to continue even if the interface is already down
     #will be removed

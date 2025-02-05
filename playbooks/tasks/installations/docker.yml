@@ -138,7 +138,7 @@
 ### Step 7: Modify containerd Configuration for systemd Support
 - name: Copy containerd configuration file from control machine
   copy:
-    src: ../templates/containerd/config.toml
+    src: ../../templates/containerd/config.toml
     dest: /etc/containerd/config.toml
     owner: root
     group: root
