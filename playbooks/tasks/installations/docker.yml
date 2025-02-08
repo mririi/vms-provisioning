@@ -25,6 +25,11 @@
   register: docker_installed
   ignore_errors: true
 
+- name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
 - name: Install prerequisites if Docker is not installed
   apt:
     name:
