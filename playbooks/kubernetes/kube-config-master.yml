@@ -19,7 +19,7 @@
 
     - name: Initialize the Kubernetes cluster
       shell: |
-        kubeadm init --apiserver-advertise-address={{master}} --pod-network-cidr=10.244.0.0/16
+        kubeadm init --apiserver-advertise-address={{ansible_host}} --pod-network-cidr=10.244.0.0/16
       register: kubeadm_init_output
 
     - name: Display kubeadm initialization output
