@@ -96,7 +96,10 @@
           host  replication       {{ repmgr_user }}  {{ network_subnet_worker1 }}  md5
           host  {{ repmgr_db }}   {{ repmgr_user }}  {{ network_subnet_worker2 }}  md5
           host  replication       {{ repmgr_user }}  {{ network_subnet_worker2 }}  md5
-      notify: Reload PostgreSQL
+    - name: Reload PostgreSQL
+      systemd:
+        name: "{{ repmgr_service_name }}"
+        state: reloaded
 
     - name: Ensure /etc/repmgr/12 directory exists
       file:
@@ -134,14 +137,3 @@
       register: primary_register
       failed_when: "primary_register.rc not in [0,1]"
       changed_when: primary_register.rc == 0
-
-  handlers:
-    - name: Restart PostgreSQL
-      systemd:
-        name: "{{ repmgr_service_name }}"
-        state: restarted
-
-    - name: Reload PostgreSQL
-      systemd:
-        name: "{{ repmgr_service_name }}"
-        state: reloaded
