@@ -1,6 +1,6 @@
 repmgr_db: "repmgr"
 repmgr_user: "repmgr"
-repmgr_password: "my_strong_password"
+repmgr_password: "repmgr"
 repmgr_config_path: "/etc/repmgr/12/repmgr.conf"
 repmgr_service_name: "postgresql"
 network_subnet_master: "{{ hostvars[groups['master_nodes'][0]].ansible_host }}/32"
