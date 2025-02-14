@@ -13,23 +13,6 @@
 - name: Apply sysctl parameters
   command: sysctl --system
 
-- name: Verify IPv4 packet forwarding
-  command: sysctl net.ipv4.ip_forward
-  register: ip_forward_status
-
-- name: Display IPv4 forwarding status
-  debug:
-    msg: "IPv4 packet forwarding status: {{ ip_forward_status.stdout }}"
-- name: Check if Docker is installed
-  shell: dpkg -l | grep docker
-  register: docker_installed
-  ignore_errors: true
-
-- name: Update apt cache
-  apt:
-    update_cache: yes
-    cache_valid_time: 3600
-
 - name: Install prerequisites if Docker is not installed
   apt:
     name:
@@ -38,7 +21,6 @@
       - curl
       - software-properties-common
     state: present
-  when: docker_installed.rc != 0
 
 - name: Add Docker GPG key
   command: >
@@ -46,54 +28,27 @@
     gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg"
   args:
     creates: /usr/share/keyrings/docker-archive-keyring.gpg
-  when: docker_installed.rc != 0
 
 - name: Add Docker repository
   shell: |
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
-  when: docker_installed.rc != 0
 
 - name: Update apt cache
   apt:
     update_cache: yes
-  when: docker_installed.rc != 0
 
 - name: Install Docker
   apt:
     name: docker-ce
     state: present
-  when: docker_installed.rc != 0
-  
-- name: Run a command to verify Docker group membership
-  shell: sg docker -c "id -nG"
-  register: group_refresh
-  changed_when: false
 
 - name: Add user to Docker group to allow non-sudo usage
   command: usermod -aG docker {{ ansible_user_id }}
-  # when: group_refresh.rc != 0
 
-# - name: Refresh group membership
-#   command: newgrp docker
-#   when: docker_installed.rc != 0
-
-- name: Display message to log out and back in
-  debug:
-    msg: "Log out and log back in for group membership changes to take effect."
-  # when: group_refresh.rc != 0
-
-- name: Check Docker service status
-  systemd:
-    name: docker
-    state: started
-    enabled: yes
-
-## Step 4: Enable and Start containerd
 - name: Enable and start containerd
   shell: |
     systemctl enable --now containerd
 
-## Step 5: Install CNI Plugin
 - name: Download CNI plugin
   get_url:
     url: https://github.com/containernetworking/plugins/releases/download/v1.4.0/cni-plugins-linux-amd64-v1.4.0.tgz
@@ -104,7 +59,6 @@
     mkdir -p /opt/cni/bin
     tar Cxzvf /opt/cni/bin /tmp/cni-plugins-linux-amd64-v1.4.0.tgz
 
-### Step 6: Forward IPv4 and Configure iptables
 - name: Load kernel modules for Kubernetes
   copy:
     dest: /etc/modules-load.d/k8s.conf
@@ -128,19 +82,11 @@
 - name: Apply sysctl parameters
   command: sysctl --system
 
-- name: Verify kernel parameters
-  shell: |
-    sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.ipv4.ip_forward
-    modprobe br_netfilter
-    sysctl -p /etc/sysctl.conf
-
- ### Step 4: Enable and Start containerd
 - name: Enable and start containerd
   shell: |
     systemctl enable --now containerd
     systemctl restart containerd
 
-### Step 7: Modify containerd Configuration for systemd Support
 - name: Copy containerd configuration file from control machine
   copy:
     src: ../../templates/containerd/config.toml
@@ -149,18 +95,8 @@
     group: root
     mode: '0644'
 
-### Step 8: Restart containerd and Check the Status
 - name: Restart containerd
   systemd:
     name: containerd
     state: restarted
     enabled: yes
-
-- name: Verify containerd status
-  shell: systemctl status containerd
-  register: containerd_status
-
-- name: Display containerd status
-  debug:
-    msg: "Containerd status: {{ containerd_status.stdout }}"
-
