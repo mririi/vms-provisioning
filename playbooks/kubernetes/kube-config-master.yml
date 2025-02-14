@@ -7,16 +7,6 @@
     - name: Pull kubeadm configuration images
       command: kubeadm config images pull
 
-    #will be removed
-    - name: Bring down eth0 network interface
-      shell: /sbin/ifdown eth0
-      register: ifdown_output
-      ignore_errors: yes  # Optional: If you want to continue even if the interface is already down
-    #will be removed
-    - name: Display ifdown output
-      debug:
-        msg: "{{ ifdown_output.stdout }}"
-
     - name: Initialize the Kubernetes cluster
       shell: |
         kubeadm init --apiserver-advertise-address={{ansible_host}} --pod-network-cidr=10.244.0.0/16
@@ -40,5 +30,5 @@
         chown $(id -u):$(id -g) $HOME/.kube/config
       when: ansible_user != 'root'
 
-    - name: Apply Weave CNI
-      shell: kubectl apply -f https://reweave.azurewebsites.net/k8s/v1.30/net.yaml
+    - name: Apply Flannel CNI
+      shell: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
