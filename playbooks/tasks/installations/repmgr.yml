@@ -1,9 +1,4 @@
 ---
-- name: Remove any old 2ndQuadrant repo file
-  file:
-    path: /etc/apt/sources.list.d/2ndquadrant.list
-    state: absent
-
 - name: Add the official PGDG APT key
   apt_key:
     url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
