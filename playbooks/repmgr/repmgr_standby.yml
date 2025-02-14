@@ -15,7 +15,7 @@
         backup: yes
       notify: Restart PostgreSQL
 
-    - name: Ensure pg_hba.conf allows repmgr from {{ network_subnet }}
+    - name: Ensure pg_hba.conf allows repmgr
       blockinfile:
         path: /etc/postgresql/12/main/pg_hba.conf
         insertafter: '^# IPv4 local connections:'
@@ -41,12 +41,6 @@
         group: postgres
         mode: '0755'
 
-    - name: Remove existing data directory to force re-clone
-      file:
-        path: "/var/lib/postgresql/12/main"
-        state: absent
-      ignore_errors: true
-
     - name: Place repmgr.conf on standby
       template:
         src: ../templates/repmgr.conf.j2
@@ -55,10 +49,8 @@
         group: postgres
         mode: '0644'
       vars:
-        # We map inventory variables repmgr_node_id/name to node_id/name
         node_id: "{{ repmgr_node_id }}"
         node_name: "{{ repmgr_node_name }}"
-        # embed the password in conninfo for demonstration
         conninfo: "host={{ ansible_host }} dbname={{ repmgr_db }} user={{ repmgr_user }} password={{ repmgr_password }}"
         config_path_for_template: "{{ repmgr_config_path }}"
         service_name: "{{ repmgr_service_name }}"
@@ -79,7 +71,6 @@
         -f {{ repmgr_config_path }}
         standby clone
         {% if copy_ext_config | bool %} --copy-external-config-files {% endif %}
-      # No 'creates:' => always re-clones
 
     - name: Start PostgreSQL on standby
       systemd:
