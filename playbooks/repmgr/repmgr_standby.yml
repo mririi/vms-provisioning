@@ -71,6 +71,7 @@
         -f {{ repmgr_config_path }}
         standby clone
         {% if copy_ext_config | bool %} --copy-external-config-files {% endif %}
+        --force
 
     - name: Start PostgreSQL on standby
       systemd:
