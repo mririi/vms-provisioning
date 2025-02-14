@@ -13,14 +13,12 @@
         update_cache: yes
       when: ansible_os_family == "Debian"
 
-    # 1) Create the repmgr database
     - name: Create repmgr database
       community.postgresql.postgresql_db:
         name: "{{ repmgr_db }}"
         state: present
       become_user: postgres
 
-    # 2) Create the repmgr user (with replication privileges)
     - name: Create repmgr user
       community.postgresql.postgresql_user:
         name: "{{ repmgr_user }}"
@@ -30,25 +28,22 @@
         state: present
       become_user: postgres
 
-    # 3) Create the repmgr extension in the repmgr database
     - name: Create repmgr extension
       community.postgresql.postgresql_query:
         db: "{{ repmgr_db }}"
         query: "CREATE EXTENSION IF NOT EXISTS repmgr;"
       become_user: postgres
 
-    # 4) Grant usage on the repmgr schema (fixes permission denied for schema repmgr)
     - name: Grant usage on the repmgr schema
       community.postgresql.postgresql_privs:
         db: "{{ repmgr_db }}"
-        objs: "repmgr"         # Just the schema name
+        objs: "repmgr"
         privs: "USAGE"
         type: schema
         roles: "{{ repmgr_user }}"
         state: present
       become_user: postgres
 
-    # 5) Grant ALL on all tables in the repmgr schema
     - name: Grant ALL on all tables in repmgr schema
       community.postgresql.postgresql_privs:
         db: "{{ repmgr_db }}"
@@ -60,7 +55,6 @@
         state: present
       become_user: postgres
 
-    # 6) Grant ALL on all sequences in the repmgr schema (optional but recommended)
     - name: Grant ALL on sequences in repmgr schema
       community.postgresql.postgresql_privs:
         db: "{{ repmgr_db }}"
@@ -85,7 +79,7 @@
         name: "{{ repmgr_service_name }}"
         state: restarted
 
-    - name: Ensure pg_hba.conf on master allows repmgr from {{ network_subnet }}
+    - name: Ensure pg_hba.conf on master allows repmgr
       blockinfile:
         path: /etc/postgresql/12/main/pg_hba.conf
         insertafter: '^# IPv4 local connections:'
