@@ -1,21 +1,24 @@
 ---
-- name: Check if repmgr is installed
-  shell: dpkg -l | grep repmgr
-  register: repmgr_installed
-  ignore_errors: true
+- name: Remove any old 2ndQuadrant repo file
+  file:
+    path: /etc/apt/sources.list.d/2ndquadrant.list
+    state: absent
 
-- name: Add 2ndQuadrant repository
-  shell: curl https://dl.2ndquadrant.com/default/release/get/deb | bash
-  args:
-    creates: /etc/apt/sources.list.d/2ndquadrant.list
+- name: Add the official PGDG APT key
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: Add the official PGDG repository
+  apt_repository:
+    repo: "deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_lsb.codename }}-pgdg main"
+    state: present
 
 - name: Update apt cache
   apt:
     update_cache: yes
-  when: repmgr_installed.rc != 0
 
-- name: Install repmgr for PostgreSQL 12
+- name: Install repmgr 12
   apt:
     name: postgresql-12-repmgr
     state: present
-  when: repmgr_installed.rc != 0
