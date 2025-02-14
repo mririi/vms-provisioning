@@ -1,10 +1,5 @@
 ---
-- name: Check if PostgreSQL 12 is installed
-  shell: dpkg -l | grep postgresql-12
-  register: postgres_installed
-  ignore_errors: true
-
-- name: Install prerequisites if PostgreSQL is not installed
+- name: Install prerequisites
   apt:
     name:
       - vim
@@ -18,7 +13,6 @@
       - ca-certificates
     state: present
     update_cache: yes
-  when: postgres_installed.rc != 0
 
 - name: Add PostgreSQL GPG key
   ansible.builtin.command: >
@@ -26,25 +20,21 @@
     gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg"
   args:
     creates: /etc/apt/trusted.gpg.d/postgresql.gpg
-  when: postgres_installed.rc != 0
-
+    
 - name: Add PostgreSQL repository
   ansible.builtin.shell: |
     echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
   args:
     creates: /etc/apt/sources.list.d/pgdg.list
-  when: postgres_installed.rc != 0
 
 - name: Update apt cache
   apt:
     update_cache: yes
-  when: postgres_installed.rc != 0
 
 - name: Install PostgreSQL 12
   apt:
     name: postgresql-12
     state: present
-  when: postgres_installed.rc != 0
 
 - name: Ensure PostgreSQL service is started and enabled
   systemd:
