@@ -13,7 +13,6 @@
         regexp: '^#?listen_addresses\s*=\s*.*'
         line: "listen_addresses = '*'"
         backup: yes
-      notify: Restart PostgreSQL
 
     - name: Ensure pg_hba.conf allows repmgr
       blockinfile:
@@ -26,7 +25,6 @@
           host  replication       {{ repmgr_user }}  {{ network_subnet_worker1 }}  md5
           host  {{ repmgr_db }}   {{ repmgr_user }}  {{ network_subnet_worker2 }}  md5
           host  replication       {{ repmgr_user }}  {{ network_subnet_worker2 }}  md5
-      notify: Reload PostgreSQL
 
     - name: Restart PostgreSQL immediately
       systemd:
@@ -65,7 +63,7 @@
       shell: >
         sudo -u postgres env PGPASSWORD={{ repmgr_password }}
         repmgr
-        -h {{ master_host }}
+        -h {{ master_private_ip }}
         -U {{ repmgr_user }}
         -d {{ repmgr_db }}
         -f {{ repmgr_config_path }}
@@ -87,14 +85,3 @@
       register: standby_register
       failed_when: "standby_register.rc not in [0,1]"
       changed_when: standby_register.rc == 0
-
-  handlers:
-    - name: Restart PostgreSQL
-      systemd:
-        name: "{{ repmgr_service_name }}"
-        state: restarted
-
-    - name: Reload PostgreSQL
-      systemd:
-        name: "{{ repmgr_service_name }}"
-        state: reloaded
