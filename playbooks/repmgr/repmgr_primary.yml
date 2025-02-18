@@ -92,8 +92,8 @@
           host  replication       {{ repmgr_user }}  {{ network_subnet_worker2 }}  md5
           host  {{ repmgr_db }}   {{ repmgr_user }}  127.0.0.1/32  md5
           host  replication       {{ repmgr_user }}  127.0.0.1/32  md5
-          host {{ repmgr_db }}    {{ repmgr_user }}  {{ master_private_ip }}/32   md5
-          host replication        {{ repmgr_user }}  {{ master_private_ip }}/32   md5
+          host {{ repmgr_db }}    {{ repmgr_user }}  {{ master_private_ip }}/24   md5
+          host replication        {{ repmgr_user }}  {{ master_private_ip }}/24   md5
     - name: Reload PostgreSQL
       systemd:
         name: "{{ repmgr_service_name }}"
