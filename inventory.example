@@ -1,9 +1,10 @@
 [master_nodes]
-master ansible_host=192.168.1.224 master_private_ip=10.0.0.4 ansible_user=vagrant repmgr_node_id=1 repmgr_node_name=master
+master ansible_host=192.168.1.224 ansible_user=vagrant repmgr_node_id=1 repmgr_node_name=master
 
 [worker_nodes]
 worker1 ansible_host=192.168.1.233 ansible_user=vagrant repmgr_node_id=2 repmgr_node_name=worker1
 worker2 ansible_host=192.168.1.251 ansible_user=vagrant repmgr_node_id=3 repmgr_node_name=worker2
 
 [all:vars]
+master_private_ip=10.0.0.4
 ansible_python_interpreter=/usr/bin/python3
