@@ -10,6 +10,24 @@
         dest: /tmp/kubeadm_join_cmd
         mode: '0755'
 
+    - name: Read the last two lines of the kubeadm join command
+      shell: tail -n 2 /tmp/kubeadm_join_cmd | tr -d '\\\n'
+      register: kubeadm_join_cmd_raw
+      delegate_to: localhost  # Runs on Ansible control node
+
+    - name: Trim whitespace and join lines into a single command
+      set_fact:
+        kubeadm_join_cmd: "{{ kubeadm_join_cmd_raw.stdout_lines | join(' ') }}"
+
+    - name: Debug the extracted join command
+      debug:
+        msg: "{{ kubeadm_join_cmd }}"
+
+    - name: Reset Kubernetes on worker nodes before joining
+      shell: kubeadm reset -f
+      become: yes
+      ignore_errors: yes  # Ignore errors if the node is fresh
+
     - name: Join the worker nodes to the Kubernetes cluster
-      shell: /tmp/kubeadm_join_cmd
+      shell: "{{ kubeadm_join_cmd }}"
       become: yes
