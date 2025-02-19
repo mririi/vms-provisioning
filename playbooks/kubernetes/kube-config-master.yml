@@ -22,13 +22,28 @@
         dest: /tmp/kubeadm_join_cmd
       become: true
       delegate_to: localhost
+    
+    - name: Ensure .kube directory exists
+      file:
+        path: "/home/{{ ansible_user }}/.kube"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
 
-    - name: Set up kubeconfig for non-root user
-      shell: |
-        mkdir -p $HOME/.kube
-        cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-        chown $(id -u):$(id -g) $HOME/.kube/config
-      when: ansible_user != 'root'
+    - name: Copy kubeconfig as root
+      command: cp -f /etc/kubernetes/admin.conf /home/{{ ansible_user }}/.kube/config
+      become: yes  # Run as root
+
+    - name: Set correct permissions
+      file:
+        path: "/home/{{ ansible_user }}/.kube/config"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0600'
+      become: yes  # Run as root
+
 
     - name: Apply Flannel CNI
-      shell: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+      shell: KUBECONFIG=/home/{{ ansible_user }}/.kube/config kubectl apply --validate=false -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentat>      become: yes
+      become_user: "{{ ansible_user }}"
