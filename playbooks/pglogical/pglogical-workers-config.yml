@@ -1,0 +1,24 @@
+- name: Create pglogical Node on Standby
+  hosts: worker_nodes
+  become: yes
+  tasks:
+    - name: Add standby node to pglogical
+      community.postgresql.postgresql_query:
+        db: pglogical_db
+        query: |
+          SELECT pglogical.create_node(
+            node_name := '{{ ansible_hostname }}',
+            dsn := 'host={{ ansible_host }} dbname=pglogical_db user=pglogical_user password=securepassword'
+          );
+      become_user: postgres
+      
+    - name: Subscribe to primary node
+      community.postgresql.postgresql_query:
+        db: pglogical_db
+        query: |
+          SELECT pglogical.create_subscription(
+            subscription_name := 'subscription_{{ ansible_hostname }}',
+            provider_dsn := 'host={{ master_private_ip }} dbname=pglogical_db user=pglogical_user password=securepassword'
+          );
+      become_user: postgres
+    
