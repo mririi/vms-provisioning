@@ -1,13 +1,12 @@
 - name: Create pglogical user and database
   hosts: master_nodes
   become: yes
-  tasks:
+  pre_tasks:
     - name: Create pglogical database
       community.postgresql.postgresql_db:
         name: pglogical_db
         state: present
       become_user: postgres
-
     - name: Create pglogical user
       community.postgresql.postgresql_user:
         name: pglogical_user
@@ -15,7 +14,6 @@
         role_attr_flags: "LOGIN,REPLICATION"
         state: present
       become_user: postgres
-
     - name: Grant privileges on pglogical database
       community.postgresql.postgresql_privs:
         db: pglogical_db
@@ -32,6 +30,7 @@
         query: "CREATE EXTENSION IF NOT EXISTS pglogical;"
       become_user: postgres
       
+  tasks:
     - name: Add primary node to pglogical
       community.postgresql.postgresql_query:
         db: pglogical_db
