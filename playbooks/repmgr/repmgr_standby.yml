@@ -13,6 +13,15 @@
         regexp: '^#?listen_addresses\s*=\s*.*'
         line: "listen_addresses = '*'"
         backup: yes
+        
+    - name: Configure PostgreSQL settings for pglogical
+      blockinfile:
+        path: /etc/postgresql/12/main/postgresql.conf
+        block: |
+          wal_level = 'logical'
+          max_replication_slots = 10
+          max_wal_senders = 10
+          track_commit_timestamp = on
 
     - name: Ensure pg_hba.conf allows repmgr
       blockinfile:
@@ -25,6 +34,8 @@
           host  replication       {{ repmgr_user }}  {{ network_subnet_worker1 }}  md5
           host  {{ repmgr_db }}   {{ repmgr_user }}  {{ network_subnet_worker2 }}  md5
           host  replication       {{ repmgr_user }}  {{ network_subnet_worker2 }}  md5
+          host    replication     pglogical_user    0.0.0.0/0     md5
+          host    all             pglogical_user    0.0.0.0/0     md5
 
     - name: Restart PostgreSQL immediately
       systemd:
