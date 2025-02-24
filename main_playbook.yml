@@ -4,6 +4,7 @@
 - import_playbook: playbooks/repmgr/repmgr_standby.yml
 - import_playbook: playbooks/pglogical/pglogical-master-config.yml
 - import_playbook: playbooks/pglogical/pglogical-workers-config.yml
+- import_playbook: playbooks/pglogical/pglogical-extension-setup.yml
 - import_playbook: playbooks/pglogical/pglogical-status-check.yml
 - import_playbook: playbooks/kubernetes/kube-config-master.yml
 - import_playbook: playbooks/kubernetes/kube-join-worker.yml
