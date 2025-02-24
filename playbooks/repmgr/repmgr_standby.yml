@@ -28,8 +28,9 @@
           wal_level = 'logical'
           max_replication_slots = 10
           max_wal_senders = 10
-          wal_keep_segments = 32
+          wal_keep_segments = 256
           track_commit_timestamp = on
+          wal_log_hints = on
 
     - name: Ensure pg_hba.conf allows repmgr
       blockinfile:
