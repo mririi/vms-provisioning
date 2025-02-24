@@ -45,5 +45,6 @@
 
 
     - name: Apply Flannel CNI
-      shell: KUBECONFIG=/home/{{ ansible_user }}/.kube/config kubectl apply --validate=false -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentat>      become: yes
+      shell: KUBECONFIG=/home/{{ ansible_user }}/.kube/config kubectl apply --validate=false -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentat>
+      become: yes
       become_user: "{{ ansible_user }}"
