@@ -28,7 +28,7 @@
           wal_level = 'logical'
           max_replication_slots = 10
           max_wal_senders = 10
-          wal_keep_segments = 512MB
+          wal_keep_segments = 32
           track_commit_timestamp = on
 
     - name: Ensure pg_hba.conf allows repmgr
