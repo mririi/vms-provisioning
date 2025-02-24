@@ -8,7 +8,7 @@
         query: |
           SELECT pglogical.create_node(
             node_name := '{{ ansible_hostname }}',
-            dsn := 'host={{ ansible_host }} dbname=pglogical_db user=pglogical_user password=securepassword'
+            dsn := 'host={{ worker_private_ip }} dbname=pglogical_db user=pglogical_user password=securepassword'
           );
       become_user: postgres
       
