@@ -43,6 +43,13 @@
         db: pglogical_db
         query: "CREATE EXTENSION IF NOT EXISTS pglogical;"
       become_user: postgres
+
+    - name: Check if primary node already exists
+      community.postgresql.postgresql_query:
+        db: pglogical_db
+        query: "SELECT node_name FROM pglogical.node WHERE node_name = '{{ ansible_hostname }}';"
+      become_user: postgres
+      register: node_check
       
     - name: Add primary node to pglogical
       community.postgresql.postgresql_query:
@@ -53,3 +60,4 @@
             dsn := 'host={{ ansible_host }} dbname=pglogical_db user=pglogical_user password=securepassword'
           );
       become_user: postgres
+      when: node_check.rowcount == 0
