@@ -1,0 +1,12 @@
+- name: Check pglogical replication status
+  hosts: master_nodes
+  become: yes
+  tasks:
+    - name: Run pglogical status check
+      command: "psql -d pglogical_db -c 'SELECT * FROM pglogical.show_subscription_status();'"
+      become_user: postgres
+      register: pglogical_status
+
+    - name: Display pglogical status
+      debug:
+        var: pglogical_status.stdout_lines
