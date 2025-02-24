@@ -135,7 +135,7 @@
       vars:
         node_id: "{{ repmgr_node_id }}"    # from inventory
         node_name: "{{ repmgr_node_name }}" # from inventory
-        conninfo: "host=127.0.0.1 dbname={{ repmgr_db }} user={{ repmgr_user }} password={{ repmgr_password }}"
+        conninfo: "host={{ master_private_ip }} dbname={{ repmgr_db }} user={{ repmgr_user }} password={{ repmgr_password }}"
         config_path_for_template: "{{ repmgr_config_path }}"
         service_name: "{{ repmgr_service_name }}"
 
