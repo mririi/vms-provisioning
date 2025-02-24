@@ -32,7 +32,6 @@
     - name: Grant privileges on pglogical database
       community.postgresql.postgresql_privs:
         db: pglogical_db
-        objs: ALL
         privs: "ALL"
         type: database
         roles: pglogical_user
