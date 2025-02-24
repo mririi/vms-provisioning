@@ -1,0 +1,44 @@
+- name: Create pglogical user and database
+  hosts: master_nodes
+  become: yes
+  tasks:
+    - name: Create pglogical database
+      community.postgresql.postgresql_db:
+        name: pglogical_db
+        state: present
+      become_user: postgres
+
+    - name: Create pglogical user
+      community.postgresql.postgresql_user:
+        name: pglogical_user
+        password: "securepassword"
+        role_attr_flags: "LOGIN,REPLICATION"
+        state: present
+      become_user: postgres
+
+    - name: Grant privileges on pglogical database
+      community.postgresql.postgresql_privs:
+        db: pglogical_db
+        objs: ALL
+        privs: "ALL"
+        type: database
+        roles: pglogical_user
+        state: present
+      become_user: postgres
+      
+    - name: Create pglogical extension
+      community.postgresql.postgresql_query:
+        db: pglogical_db
+        query: "CREATE EXTENSION IF NOT EXISTS pglogical;"
+      become_user: postgres
+      
+    - name: Add primary node to pglogical
+      community.postgresql.postgresql_query:
+        db: pglogical_db
+        query: |
+          SELECT pglogical.create_node(
+            node_name := '{{ ansible_hostname }}',
+            dsn := 'host={{ ansible_host }} dbname=pglogical_db user=pglogical_user password=postgres'
+          );
+      become_user: postgres
+    
