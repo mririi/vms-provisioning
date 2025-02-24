@@ -74,6 +74,13 @@
         line: "listen_addresses = '*'"
         backup: yes
 
+    - name: Ensure pglogical is in shared_preload_libraries
+      lineinfile:
+        path: /etc/postgresql/12/main/postgresql.conf
+        regexp: '^#?shared_preload_libraries\s*='
+        line: "shared_preload_libraries = 'pglogical'"
+        backup: yes
+
     - name: Configure PostgreSQL settings for pglogical
       blockinfile:
         path: /etc/postgresql/12/main/postgresql.conf
