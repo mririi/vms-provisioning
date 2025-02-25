@@ -52,7 +52,11 @@
     line: 'port = 6588'
     state: present
     backup: yes
-  notify: Restart PostgreSQL
+
+- name: Restart PostgreSQL
+  ansible.builtin.service:
+    name: postgresql
+    state: restarted
 
 - name: Ensure PostgreSQL is listening on the new port
   ansible.builtin.shell: "grep '^port' /etc/postgresql/12/main/postgresql.conf"
