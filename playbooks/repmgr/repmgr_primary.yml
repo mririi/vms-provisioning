@@ -106,6 +106,10 @@
           host  replication       {{ repmgr_user }}  {{ network_subnet_worker1 }}  md5
           host  {{ repmgr_db }}   {{ repmgr_user }}  {{ network_subnet_worker2 }}  md5
           host  replication       {{ repmgr_user }}  {{ network_subnet_worker2 }}  md5
+          host  {{ repmgr_db }}   {{ repmgr_user }}  {{ worker1_private_ip }}  md5
+          host  replication       {{ repmgr_user }}  {{ worker1_private_ip }}  md5
+          host  {{ repmgr_db }}   {{ repmgr_user }}  {{ worker2_private_ip }}  md5
+          host  replication       {{ repmgr_user }}  {{ worker2_private_ip }}  md5
           host  {{ repmgr_db }}   {{ repmgr_user }}  127.0.0.1/32  md5
           host  replication       {{ repmgr_user }}  127.0.0.1/32  md5
           host {{ repmgr_db }}    {{ repmgr_user }}  {{ master_private_ip }}/24   md5
