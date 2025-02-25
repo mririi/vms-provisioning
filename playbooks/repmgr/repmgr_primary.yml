@@ -17,12 +17,14 @@
       community.postgresql.postgresql_db:
         name: "{{ repmgr_db }}"
         state: present
+        login_port: 6588
       become_user: postgres
 
     - name: Create repmgr user
       community.postgresql.postgresql_user:
         name: "{{ repmgr_user }}"
         password: "{{ repmgr_password }}"
+        login_port: 6588
         db: "{{ repmgr_db }}"
         role_attr_flags: 'LOGIN,REPLICATION'
         state: present
@@ -31,6 +33,7 @@
     - name: Create repmgr extension
       community.postgresql.postgresql_query:
         db: "{{ repmgr_db }}"
+        login_port: 6588
         query: "CREATE EXTENSION IF NOT EXISTS repmgr;"
       become_user: postgres
 
@@ -41,6 +44,7 @@
         privs: "USAGE"
         type: schema
         roles: "{{ repmgr_user }}"
+        login_port: 6588
         state: present
       become_user: postgres
 
@@ -52,6 +56,7 @@
         type: table
         roles: "{{ repmgr_user }}"
         privs: "ALL"
+        login_port: 6588
         state: present
       become_user: postgres
 
@@ -63,6 +68,7 @@
         type: sequence
         roles: "{{ repmgr_user }}"
         privs: "ALL"
+        login_port: 6588
         state: present
       become_user: postgres
       
