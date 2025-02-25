@@ -4,8 +4,8 @@
   become: yes
   vars_files:
     - ../vars/repmgr.yml
-
-  pre_tasks:
+    
+  tasks:
     - name: Install required Python libraries (Debian/Ubuntu)
       apt:
         name: python3-psycopg2
@@ -65,8 +65,7 @@
         privs: "ALL"
         state: present
       become_user: postgres
-
-  tasks:
+      
     - name: Ensure PostgreSQL (master) listens on all interfaces
       lineinfile:
         path: /etc/postgresql/12/main/postgresql.conf
