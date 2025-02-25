@@ -158,7 +158,6 @@
       shell: >
         sudo -u postgres repmgr
         -f {{ repmgr_config_path }}
-        -p 6588
         primary register --force
       register: primary_register
       failed_when: "primary_register.rc not in [0,1]"
