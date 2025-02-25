@@ -69,7 +69,7 @@
       vars:
         node_id: "{{ repmgr_node_id }}"
         node_name: "{{ repmgr_node_name }}"
-        conninfo: "host={{ worker_private_ip }} dbname={{ repmgr_db }} user={{ repmgr_user }} password={{ repmgr_password }}"
+        conninfo: "host={{ worker_private_ip }} dbname={{ repmgr_db }} user={{ repmgr_user }} password={{ repmgr_password }} port=6588"
         config_path_for_template: "{{ repmgr_config_path }}"
         service_name: "{{ repmgr_service_name }}"
 
