@@ -6,6 +6,13 @@
     - ../vars/repmgr.yml
 
   pre_tasks:
+    - name: Install required Python libraries (Debian/Ubuntu)
+      apt:
+        name: python3-psycopg2
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
     - name: Create repmgr database
       community.postgresql.postgresql_db:
         name: "{{ repmgr_db }}"
@@ -67,20 +74,6 @@
         line: "listen_addresses = '*'"
         backup: yes
 
-    - name: Set PostgreSQL port to 6588
-      lineinfile:
-        path: /etc/postgresql/12/main/postgresql.conf
-        regexp: '^#?port\s*=\s*.*'
-        line: "port = 6588"
-        backup: yes
-
-    - name: Ensure Unix socket is correctly set
-      lineinfile:
-        path: /etc/postgresql/12/main/postgresql.conf
-        regexp: '^#?unix_socket_directories\s*='
-        line: "unix_socket_directories = '/var/run/postgresql'"
-        backup: yes
-
     - name: Ensure pglogical is in shared_preload_libraries
       lineinfile:
         path: /etc/postgresql/12/main/postgresql.conf
@@ -97,12 +90,12 @@
           max_wal_senders = 10
           track_commit_timestamp = on
           
-    - name: Restart PostgreSQL to apply configuration changes
+    - name: Restart PostgreSQL immediately
       systemd:
         name: "{{ repmgr_service_name }}"
         state: restarted
 
-    - name: Ensure pg_hba.conf on master allows repmgr and new port
+    - name: Ensure pg_hba.conf on master allows repmgr
       blockinfile:
         path: /etc/postgresql/12/main/pg_hba.conf
         insertafter: '^# IPv4 local connections:'
@@ -115,8 +108,8 @@
           host  replication       {{ repmgr_user }}  {{ network_subnet_worker2 }}  md5
           host  {{ repmgr_db }}   {{ repmgr_user }}  127.0.0.1/32  md5
           host  replication       {{ repmgr_user }}  127.0.0.1/32  md5
-          host  {{ repmgr_db }}   {{ repmgr_user }}  {{ master_private_ip }}/24   md5
-          host  replication       {{ repmgr_user }}  {{ master_private_ip }}/24   md5
+          host {{ repmgr_db }}    {{ repmgr_user }}  {{ master_private_ip }}/24   md5
+          host replication        {{ repmgr_user }}  {{ master_private_ip }}/24   md5
           host    replication     pglogical_user    0.0.0.0/0     md5
           host    all             pglogical_user    0.0.0.0/0     md5
     - name: Reload PostgreSQL
@@ -140,9 +133,9 @@
         group: postgres
         mode: '0644'
       vars:
-        node_id: "{{ repmgr_node_id }}"
-        node_name: "{{ repmgr_node_name }}"
-        conninfo: "host={{ master_private_ip }} dbname={{ repmgr_db }} user={{ repmgr_user }} password={{ repmgr_password }} port=6588"
+        node_id: "{{ repmgr_node_id }}"    # from inventory
+        node_name: "{{ repmgr_node_name }}" # from inventory
+        conninfo: "host={{ master_private_ip }} dbname={{ repmgr_db }} user={{ repmgr_user }} password={{ repmgr_password }}"
         config_path_for_template: "{{ repmgr_config_path }}"
         service_name: "{{ repmgr_service_name }}"
 
@@ -160,10 +153,3 @@
       register: primary_register
       failed_when: "primary_register.rc not in [0,1]"
       changed_when: primary_register.rc == 0
-
-    - name: Verify PostgreSQL is running on port 6588
-      shell: "ss -tulnp | grep :6588"
-      register: postgres_port_check
-
-    - debug:
-        msg: "PostgreSQL is now listening on port 6588: {{ postgres_port_check.stdout }}"
