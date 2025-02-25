@@ -44,23 +44,3 @@
     name: postgresql
     state: started
     enabled: yes
-    
-- name: Change PostgreSQL port in postgresql.conf
-  ansible.builtin.lineinfile:
-    path: /etc/postgresql/12/main/postgresql.conf
-    regexp: '^port = '
-    line: 'port = 6588'
-    state: present
-    backup: yes
-
-- name: Restart PostgreSQL
-  ansible.builtin.service:
-    name: postgresql
-    state: restarted
-
-- name: Ensure PostgreSQL is listening on the new port
-  ansible.builtin.shell: "grep '^port' /etc/postgresql/12/main/postgresql.conf"
-  register: postgres_port_check
-
-- debug:
-    msg: "PostgreSQL port updated to: {{ postgres_port_check.stdout }}"
