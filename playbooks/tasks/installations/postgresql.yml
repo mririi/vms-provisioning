@@ -46,15 +46,15 @@
     line: "port = 6588"
     backup: yes
 
+- name: Ensure PostgreSQL service is started and enabled
+  systemd:
+    name: postgresql
+    state: started
+    enabled: yes
+
 - name: Verify PostgreSQL is running on port 6588
   shell: "ss -tulnp | grep :6588"
   register: postgres_port_check
 
 - debug:
     msg: "PostgreSQL is now listening on port 6588: {{ postgres_port_check.stdout }}"
-
-- name: Ensure PostgreSQL service is started and enabled
-  systemd:
-    name: postgresql
-    state: started
-    enabled: yes
