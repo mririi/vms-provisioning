@@ -39,6 +39,20 @@
       - postgresql-12-pglogical
     state: present
 
+- name: Change PostgreSQL port in postgresql.conf
+  lineinfile:
+    path: /etc/postgresql/12/main/postgresql.conf
+    regexp: '^#?port\s*=\s*.*'
+    line: "port = 6588"
+    backup: yes
+
+- name: Verify PostgreSQL is running on port 6588
+  shell: "ss -tulnp | grep :6588"
+  register: postgres_port_check
+
+- debug:
+    msg: "PostgreSQL is now listening on port 6588: {{ postgres_port_check.stdout }}"
+
 - name: Ensure PostgreSQL service is started and enabled
   systemd:
     name: postgresql
