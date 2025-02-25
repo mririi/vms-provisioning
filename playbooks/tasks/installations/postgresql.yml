@@ -46,6 +46,11 @@
     line: "port = 6588"
     backup: yes
 
+- name: Restart PostgreSQL to apply changes
+  systemd:
+    name: postgresql
+    state: restarted
+
 - name: Ensure PostgreSQL service is started and enabled
   systemd:
     name: postgresql
