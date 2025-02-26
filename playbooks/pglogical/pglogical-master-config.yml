@@ -60,11 +60,10 @@
     - name: Add primary node to pglogical
       community.postgresql.postgresql_query:
         db: pglogical_db
-        login_port: 6588
         query: |
           SELECT pglogical.create_node(
             node_name := '{{ ansible_hostname }}',
-            dsn := 'host={{ master_private_ip }} dbname=pglogical_db user=pglogical_user password=securepassword'
+            dsn := 'host={{ master_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
           );
       become_user: postgres
       when: node_check.rowcount == 0
@@ -72,21 +71,19 @@
     - name: Subscribe to standby 1 node
       community.postgresql.postgresql_query:
         db: pglogical_db
-        login_port: 6588
         query: |
           SELECT pglogical.create_subscription(
             subscription_name := 'subscription_{{ ansible_hostname }}',
-            provider_dsn := 'host={{ worker1_private_ip }} dbname=pglogical_db user=pglogical_user password=securepassword'
+            provider_dsn := 'host={{ worker1_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
           );
       become_user: postgres
 
     - name: Subscribe to standby 2 node
       community.postgresql.postgresql_query:
         db: pglogical_db
-        login_port: 6588
         query: |
           SELECT pglogical.create_subscription(
             subscription_name := 'subscription_{{ ansible_hostname }}',
-            provider_dsn := 'host={{ worker2_private_ip }} dbname=pglogical_db user=pglogical_user password=securepassword'
+            provider_dsn := 'host={{ worker2_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
           );
       become_user: postgres
