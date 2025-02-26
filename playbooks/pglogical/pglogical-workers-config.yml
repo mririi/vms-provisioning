@@ -5,6 +5,7 @@
     - name: Add standby node to pglogical
       community.postgresql.postgresql_query:
         db: pglogical_db
+        login_port: 6588
         query: |
           SELECT pglogical.create_node(
             node_name := '{{ ansible_hostname }}',
@@ -15,6 +16,7 @@
     - name: Subscribe to primary node
       community.postgresql.postgresql_query:
         db: pglogical_db
+        login_port: 6588
         query: |
           SELECT pglogical.create_subscription(
             subscription_name := 'subscription_{{ ansible_hostname }}',
@@ -25,6 +27,7 @@
     - name: Subscribe to other standby nodes
       community.postgresql.postgresql_query:
         db: pglogical_db
+        login_port: 6588
         query: |
           SELECT pglogical.create_subscription(
             subscription_name := 'subscription_{{ ansible_hostname }}',

@@ -2,17 +2,19 @@
   hosts: master_nodes
   become: yes
 
-  pre_tasks:
+  tasks:
     - name: Create pglogical database
       community.postgresql.postgresql_db:
         name: pglogical_db
         state: present
+        login_port: 6588
       become_user: postgres
 
     - name: Ensure pglogical database exists
       community.postgresql.postgresql_query:
         db: postgres
         query: "SELECT 1 FROM pg_database WHERE datname = 'pglogical_db';"
+        login_port: 6588
       become_user: postgres
       register: db_check
       failed_when: db_check.rowcount == 0
@@ -22,18 +24,20 @@
         name: pglogical_user
         password: "securepassword"
         role_attr_flags: "LOGIN,REPLICATION"
+        login_port: 6588
         state: present
       become_user: postgres
 
     - name: Ensure database is ready before granting privileges
       pause:
-        seconds: 5  # Ensure the database is fully available
-  tasks:
+        seconds: 5
+        
     - name: Grant privileges on pglogical database
       community.postgresql.postgresql_privs:
         db: pglogical_db
         privs: "ALL"
         type: database
+        login_port: 6588
         roles: pglogical_user
         state: present
       become_user: postgres
@@ -41,12 +45,14 @@
     - name: Create pglogical extension
       community.postgresql.postgresql_query:
         db: pglogical_db
+        login_port: 6588
         query: "CREATE EXTENSION IF NOT EXISTS pglogical;"
       become_user: postgres
 
     - name: Check if primary node already exists
       community.postgresql.postgresql_query:
         db: pglogical_db
+        login_port: 6588
         query: "SELECT node_name FROM pglogical.node WHERE node_name = '{{ ansible_hostname }}';"
       become_user: postgres
       register: node_check
@@ -54,6 +60,7 @@
     - name: Add primary node to pglogical
       community.postgresql.postgresql_query:
         db: pglogical_db
+        login_port: 6588
         query: |
           SELECT pglogical.create_node(
             node_name := '{{ ansible_hostname }}',
@@ -65,6 +72,7 @@
     - name: Subscribe to standby 1 node
       community.postgresql.postgresql_query:
         db: pglogical_db
+        login_port: 6588
         query: |
           SELECT pglogical.create_subscription(
             subscription_name := 'subscription_{{ ansible_hostname }}',
@@ -75,6 +83,7 @@
     - name: Subscribe to standby 2 node
       community.postgresql.postgresql_query:
         db: pglogical_db
+        login_port: 6588
         query: |
           SELECT pglogical.create_subscription(
             subscription_name := 'subscription_{{ ansible_hostname }}',
