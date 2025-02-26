@@ -24,36 +24,36 @@
         name: pglogical_user
         password: "securepassword"
         role_attr_flags: "LOGIN,REPLICATION"
-        login_port: 6588
         state: present
+        login_port: 6588
       become_user: postgres
 
     - name: Ensure database is ready before granting privileges
       pause:
-        seconds: 5
-        
+        seconds: 5  # Ensure the database is fully available
+
     - name: Grant privileges on pglogical database
       community.postgresql.postgresql_privs:
         db: pglogical_db
         privs: "ALL"
         type: database
-        login_port: 6588
         roles: pglogical_user
         state: present
+        login_port: 6588
       become_user: postgres
 
     - name: Create pglogical extension
       community.postgresql.postgresql_query:
         db: pglogical_db
-        login_port: 6588
         query: "CREATE EXTENSION IF NOT EXISTS pglogical;"
+        login_port: 6588
       become_user: postgres
 
     - name: Check if primary node already exists
       community.postgresql.postgresql_query:
         db: pglogical_db
-        login_port: 6588
         query: "SELECT node_name FROM pglogical.node WHERE node_name = '{{ ansible_hostname }}';"
+        login_port: 6588
       become_user: postgres
       register: node_check
       
@@ -65,6 +65,7 @@
             node_name := '{{ ansible_hostname }}',
             dsn := 'host={{ master_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
           );
+        login_port: 6588
       become_user: postgres
       when: node_check.rowcount == 0
 
@@ -76,6 +77,7 @@
     #         subscription_name := 'subscription_{{ ansible_hostname }}',
     #         provider_dsn := 'host={{ worker1_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
     #       );
+    #     login_port: 6588
     #   become_user: postgres
 
     # - name: Subscribe to standby 2 node
@@ -86,4 +88,5 @@
     #         subscription_name := 'subscription_{{ ansible_hostname }}',
     #         provider_dsn := 'host={{ worker2_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
     #       );
+    #     login_port: 6588
     #   become_user: postgres
