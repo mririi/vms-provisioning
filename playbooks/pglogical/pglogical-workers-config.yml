@@ -14,7 +14,7 @@
     - name: Check if node is already configured
       community.postgresql.postgresql_query:
         db: pglogical_db
-        query: "SELECT node_name FROM pglogical.node WHERE node_name = '{{ ansible_hostname1 }}';"
+        query: "SELECT node_name FROM pglogical.node WHERE node_name = '{{ ansible_hostname }}1';"
         login_port: 6588
       become_user: postgres
       register: node_check
@@ -24,7 +24,7 @@
         db: pglogical_db
         query: |
           SELECT pglogical.create_node(
-            node_name := '{{ ansible_hostname1 }}',
+            node_name := '{{ ansible_hostname }}1',
             dsn := 'host={{ worker_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
           );
         login_port: 6588
@@ -57,7 +57,7 @@
         db: pglogical_db
         query: |
           SELECT pglogical.create_subscription(
-            subscription_name := 'subscription_{{ ansible_hostname1 }}',
+            subscription_name := 'subscription_{{ ansible_hostname }}1',
             provider_dsn := 'host={{ master_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
           );
         login_port: 6588
@@ -68,7 +68,7 @@
         db: pglogical_db
         query: |
           SELECT pglogical.create_subscription(
-            subscription_name := 'subscription_{{ ansible_hostname1 }}',
+            subscription_name := 'subscription_{{ ansible_hostname }}1',
             provider_dsn := 'host={{ other_worker_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
           );
         login_port: 6588
