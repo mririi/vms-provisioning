@@ -5,7 +5,6 @@
     - name: Promote standby node to read-write mode
       shell: "sudo -u postgres /usr/lib/postgresql/12/bin/pg_ctl promote -D /var/lib/postgresql/12/main"
       become_user: postgres
-      login_port: 6588
       ignore_errors: yes
 
     - name: Wait for promotion to complete
@@ -26,7 +25,6 @@
 
     - name: Revert standby node to recovery mode
       shell: "sudo -u postgres /usr/lib/postgresql/12/bin/pg_ctl restart -D /var/lib/postgresql/12/main -m fast"
-      login_port: 6588
       become_user: postgres
       ignore_errors: yes
       
