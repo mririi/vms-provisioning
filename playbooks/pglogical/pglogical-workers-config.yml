@@ -11,6 +11,14 @@
       pause:
         seconds: 10
 
+    - name: Check if node is already configured
+      community.postgresql.postgresql_query:
+        db: pglogical_db
+        query: "SELECT node_name FROM pglogical.node WHERE node_name = '{{ ansible_hostname }}';"
+        login_port: 6588
+      become_user: postgres
+      register: node_check
+
     - name: Add standby node to pglogical
       community.postgresql.postgresql_query:
         db: pglogical_db
@@ -21,13 +29,28 @@
           );
         login_port: 6588
       become_user: postgres
+      when: node_check.rowcount == 0
       ignore_errors: yes
+
+    - name: Grant permissions on pglogical schema
+      community.postgresql.postgresql_privs:
+        db: pglogical_db
+        privs: "USAGE"
+        type: schema
+        roles: pglogical_user
+        schema: pglogical
+        state: present
+      become_user: postgres
 
     - name: Revert standby node to recovery mode
       shell: "/usr/lib/postgresql/12/bin/pg_ctl restart -D /var/lib/postgresql/12/main -m fast"
       become_user: postgres
       ignore_errors: yes
-      
+
+    - name: Wait for PostgreSQL to start
+      pause:
+        seconds: 10
+
     - name: Subscribe to primary node
       community.postgresql.postgresql_query:
         db: pglogical_db
