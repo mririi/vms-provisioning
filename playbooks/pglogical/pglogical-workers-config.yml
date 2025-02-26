@@ -2,16 +2,31 @@
   hosts: worker_nodes
   become: yes
   tasks:
-    # - name: Add standby node to pglogical
-    #   community.postgresql.postgresql_query:
-    #     db: pglogical_db
-    #     query: |
-    #       SELECT pglogical.create_node(
-    #         node_name := '{{ ansible_hostname }}',
-    #         dsn := 'host={{ worker_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
-    #       );
-    #     login_port: 6588
-    #   become_user: postgres
+    - name: Promote standby node to read-write mode
+      shell: "pg_ctl promote -D /var/lib/postgresql/data"
+      become_user: postgres
+      ignore_errors: yes
+
+    - name: Wait for promotion to complete
+      pause:
+        seconds: 10
+
+    - name: Add standby node to pglogical
+      community.postgresql.postgresql_query:
+        db: pglogical_db
+        query: |
+          SELECT pglogical.create_node(
+            node_name := '{{ ansible_hostname }}',
+            dsn := 'host={{ worker_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
+          );
+        login_port: 6588
+      become_user: postgres
+      ignore_errors: yes
+
+    - name: Revert standby node to recovery mode
+      shell: "pg_ctl restart -D /var/lib/postgresql/data -m fast"
+      become_user: postgres
+      ignore_errors: yes
       
     - name: Subscribe to primary node
       community.postgresql.postgresql_query:
@@ -24,14 +39,14 @@
         login_port: 6588
       become_user: postgres
 
-    # - name: Subscribe to other standby nodes
-    #   community.postgresql.postgresql_query:
-    #     db: pglogical_db
-    #     query: |
-    #       SELECT pglogical.create_subscription(
-    #         subscription_name := 'subscription_{{ ansible_hostname }}',
-    #         provider_dsn := 'host={{ other_worker_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
-    #       );
-    #     login_port: 6588
-    #   become_user: postgres
+    - name: Subscribe to other standby nodes
+      community.postgresql.postgresql_query:
+        db: pglogical_db
+        query: |
+          SELECT pglogical.create_subscription(
+            subscription_name := 'subscription_{{ ansible_hostname }}',
+            provider_dsn := 'host={{ other_worker_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
+          );
+        login_port: 6588
+      become_user: postgres
 
