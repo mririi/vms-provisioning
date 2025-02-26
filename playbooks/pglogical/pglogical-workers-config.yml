@@ -3,8 +3,9 @@
   become: yes
   tasks:
     - name: Promote standby node to read-write mode
-      shell: "pg_ctl promote -D /var/lib/postgresql/data"
+      shell: "sudo -u postgres /usr/lib/postgresql/12/bin/pg_ctl promote -D /var/lib/postgresql/12/main"
       become_user: postgres
+      login_port: 6588
       ignore_errors: yes
 
     - name: Wait for promotion to complete
@@ -24,7 +25,8 @@
       ignore_errors: yes
 
     - name: Revert standby node to recovery mode
-      shell: "pg_ctl restart -D /var/lib/postgresql/data -m fast"
+      shell: "sudo -u postgres /usr/lib/postgresql/12/bin/pg_ctl restart -D /var/lib/postgresql/12/main -m fast"
+      login_port: 6588
       become_user: postgres
       ignore_errors: yes
       
