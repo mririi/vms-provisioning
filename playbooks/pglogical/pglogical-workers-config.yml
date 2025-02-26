@@ -10,6 +10,7 @@
             node_name := '{{ ansible_hostname }}',
             dsn := 'host={{ worker_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
           );
+        login_port: 6588
       become_user: postgres
       
     - name: Subscribe to primary node
@@ -20,6 +21,7 @@
             subscription_name := 'subscription_{{ ansible_hostname }}',
             provider_dsn := 'host={{ master_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
           );
+        login_port: 6588
       become_user: postgres
 
     - name: Subscribe to other standby nodes
@@ -30,5 +32,6 @@
             subscription_name := 'subscription_{{ ansible_hostname }}',
             provider_dsn := 'host={{ other_worker_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
           );
+        login_port: 6588
       become_user: postgres
 
