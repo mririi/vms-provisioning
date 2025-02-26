@@ -21,4 +21,14 @@
             provider_dsn := 'host={{ master_private_ip }} dbname=pglogical_db user=pglogical_user password=securepassword'
           );
       become_user: postgres
-    
+
+    - name: Subscribe to other standby nodes
+      community.postgresql.postgresql_query:
+        db: pglogical_db
+        query: |
+          SELECT pglogical.create_subscription(
+            subscription_name := 'subscription_{{ ansible_hostname }}',
+            provider_dsn := 'host={{ other_worker_private_ip }} dbname=pglogical_db user=pglogical_user password=securepassword'
+          );
+      become_user: postgres
+
