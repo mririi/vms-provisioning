@@ -32,13 +32,13 @@
       when: node_check.rowcount == 0
       ignore_errors: yes
 
-    - name: Grant permissions on pglogical schema
+    - name: Grant USAGE on pglogical schema to pglogical_user
       community.postgresql.postgresql_privs:
         db: pglogical_db
         privs: "USAGE"
         type: schema
         roles: pglogical_user
-        schema: pglogical
+        objs: pglogical
         state: present
       become_user: postgres
 
