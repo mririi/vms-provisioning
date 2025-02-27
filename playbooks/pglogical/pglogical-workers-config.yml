@@ -60,13 +60,13 @@
         state: present
       become_user: postgres
 
-    - name: Grant SELECT on all tables in pglogical schema
+    - name: Grant SELECT on all tables in public schema to pglogical_user
       community.postgresql.postgresql_privs:
         db: pglogical_db
         privs: "SELECT"
         type: table
         roles: pglogical_user
-        objs: "pglogical.*"
+        objs: "public.*"
         login_port: 6588
         state: present
       become_user: postgres
