@@ -49,6 +49,29 @@
         login_port: 6588
       become_user: postgres
 
+    - name: Grant USAGE on pglogical schema to pglogical_user
+      community.postgresql.postgresql_privs:
+        db: pglogical_db
+        privs: "USAGE"
+        type: schema
+        roles: pglogical_user
+        objs: pglogical
+        login_port: 6588
+        state: present
+      become_user: postgres
+
+    - name: Grant SELECT on all tables in pglogical schema
+      community.postgresql.postgresql_privs:
+        db: pglogical_db
+        privs: "SELECT"
+        type: table
+        schema: pglogical
+        roles: pglogical_user
+        objs: "ALL_IN_SCHEMA"
+        login_port: 6588
+        state: present
+      become_user: postgres
+
     - name: Check if primary node already exists
       community.postgresql.postgresql_query:
         db: pglogical_db
