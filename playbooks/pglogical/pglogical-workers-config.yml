@@ -45,7 +45,7 @@
     - name: Grant USAGE & SELECT on pglogical schema to pglogical_user
       community.postgresql.postgresql_privs:
         db: pglogical_db
-        privs: "USAGE, SELECT"
+        privs: "USAGE,SELECT"
         type: schema
         roles: pglogical_user
         objs: pglogical
