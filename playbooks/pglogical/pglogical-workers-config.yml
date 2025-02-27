@@ -21,7 +21,6 @@
           );
         login_port: 6588
       become_user: postgres
-      when: node_check.rowcount == 0
       ignore_errors: yes
 
     - name: Grant USAGE on pglogical schema to pglogical_user
