@@ -65,8 +65,9 @@
         db: pglogical_db
         privs: "SELECT"
         type: table
+        schema: public
         roles: pglogical_user
-        objs: "*"
+        objs: "ALL_IN_SCHEMA"
         login_port: 6588
         state: present
       become_user: postgres
@@ -101,9 +102,9 @@
           );
         login_port: 6588
       become_user: postgres
+      register: result
       retries: 3
       delay: 5
-      register: result
       until: result is not failed
 
     - name: Subscribe to other standby nodes
