@@ -2,6 +2,7 @@
   hosts: worker_nodes
   become: yes
   tasks:
+
     - name: Create pglogical database
       community.postgresql.postgresql_db:
         name: pglogical_db
@@ -31,7 +32,7 @@
       pause:
         seconds: 5  # Ensure the database is fully available
 
-    - name: Grant privileges on pglogical database
+    - name: Grant full privileges on pglogical database
       community.postgresql.postgresql_privs:
         db: pglogical_db
         privs: "ALL"
@@ -41,13 +42,34 @@
         login_port: 6588
       become_user: postgres
 
+    - name: Grant USAGE & SELECT on pglogical schema to pglogical_user
+      community.postgresql.postgresql_privs:
+        db: pglogical_db
+        privs: "USAGE, SELECT"
+        type: schema
+        roles: pglogical_user
+        objs: pglogical
+        login_port: 6588
+        state: present
+      become_user: postgres
+
+    - name: Grant SELECT on all tables in pglogical schema
+      community.postgresql.postgresql_privs:
+        db: pglogical_db
+        privs: "SELECT"
+        type: table
+        roles: pglogical_user
+        objs: pglogical.*
+        login_port: 6588
+        state: present
+      become_user: postgres
+
     - name: Create pglogical extension
       community.postgresql.postgresql_query:
         db: pglogical_db
         query: "CREATE EXTENSION IF NOT EXISTS pglogical;"
         login_port: 6588
       become_user: postgres
-
 
     - name: Add standby node to pglogical
       community.postgresql.postgresql_query:
@@ -61,25 +83,13 @@
       become_user: postgres
       ignore_errors: yes
 
-    - name: Grant USAGE on pglogical schema to pglogical_user
-      community.postgresql.postgresql_privs:
-        db: pglogical_db
-        privs: "USAGE"
-        type: schema
-        roles: pglogical_user
-        objs: pglogical
-        login_port: 6588
-        state: present
-      become_user: postgres
+    - name: Restart PostgreSQL before subscriptions
+      shell: "systemctl restart postgresql"
+      become: yes
 
-    # - name: Revert standby node to recovery mode
-    #   shell: "/usr/lib/postgresql/12/bin/pg_ctl restart -D /var/lib/postgresql/12/main -m fast"
-    #   become_user: postgres
-    #   ignore_errors: yes
-
-    # - name: Wait for PostgreSQL to start
-    #   pause:
-    #     seconds: 10
+    - name: Wait for PostgreSQL to start
+      pause:
+        seconds: 10
 
     - name: Subscribe to primary node
       community.postgresql.postgresql_query:
@@ -91,6 +101,10 @@
           );
         login_port: 6588
       become_user: postgres
+      retries: 3
+      delay: 5
+      register: result
+      until: result is not failed
 
     - name: Subscribe to other standby nodes
       community.postgresql.postgresql_query:
@@ -102,4 +116,7 @@
           );
         login_port: 6588
       become_user: postgres
-
+      retries: 3
+      delay: 5
+      register: result
+      until: result is not failed
