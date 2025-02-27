@@ -30,7 +30,7 @@
 
     - name: Ensure database is ready before granting privileges
       pause:
-        seconds: 5  # Ensure the database is fully available
+        seconds: 5
 
     - name: Grant privileges on pglogical database
       community.postgresql.postgresql_privs:
@@ -71,45 +71,14 @@
         login_port: 6588
         state: present
       become_user: postgres
-
-    - name: Check if primary node already exists
-      community.postgresql.postgresql_query:
-        db: pglogical_db
-        query: "SELECT node_name FROM pglogical.node WHERE node_name = '{{ ansible_hostname }}';"
-        login_port: 6588
-      become_user: postgres
-      register: node_check
       
     - name: Add primary node to pglogical
       community.postgresql.postgresql_query:
         db: pglogical_db
         query: |
           SELECT pglogical.create_node(
-            node_name := '{{ ansible_hostname }}',
+            node_name := '{{ ansible_hostname | lower }}',
             dsn := 'host={{ master_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
           );
         login_port: 6588
       become_user: postgres
-      when: node_check.rowcount == 0
-
-    # - name: Subscribe to standby 1 node
-    #   community.postgresql.postgresql_query:
-    #     db: pglogical_db
-    #     query: |
-    #       SELECT pglogical.create_subscription(
-    #         subscription_name := 'subscription_{{ ansible_hostname }}',
-    #         provider_dsn := 'host={{ worker1_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
-    #       );
-    #     login_port: 6588
-    #   become_user: postgres
-
-    # - name: Subscribe to standby 2 node
-    #   community.postgresql.postgresql_query:
-    #     db: pglogical_db
-    #     query: |
-    #       SELECT pglogical.create_subscription(
-    #         subscription_name := 'subscription_{{ ansible_hostname }}',
-    #         provider_dsn := 'host={{ worker2_private_ip }} port=6588 dbname=pglogical_db user=pglogical_user password=securepassword'
-    #       );
-    #     login_port: 6588
-    #   become_user: postgres

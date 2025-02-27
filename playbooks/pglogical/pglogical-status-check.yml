@@ -1,12 +1,43 @@
-- name: Check pglogical replication status
+- name: Check pglogical replication status on master
   hosts: master_nodes
   become: yes
   tasks:
-    - name: Run pglogical status check
+    - name: Check pglogical nodes on master
+      command: "psql -d pglogical_db -c 'SELECT * FROM pglogical.node;'"
+      become_user: postgres
+      register: pglogical_nodes
+
+    - name: Display pglogical nodes on master
+      debug:
+        var: pglogical_nodes.stdout_lines
+
+    - name: Check subscription status on master
       command: "psql -d pglogical_db -c 'SELECT * FROM pglogical.show_subscription_status();'"
       become_user: postgres
       register: pglogical_status
 
-    - name: Display pglogical status
+    - name: Display subscription status on master
+      debug:
+        var: pglogical_status.stdout_lines
+
+- name: Check pglogical replication status on workers
+  hosts: worker_nodes
+  become: yes
+  tasks:
+    - name: Check pglogical nodes on workers
+      command: "psql -d pglogical_db -c 'SELECT * FROM pglogical.node;'"
+      become_user: postgres
+      register: pglogical_nodes
+
+    - name: Display pglogical nodes on workers
+      debug:
+        var: pglogical_nodes.stdout_lines
+
+    - name: Check subscription status on workers
+      command: "psql -d pglogical_db -c 'SELECT * FROM pglogical.show_subscription_status();'"
+      become_user: postgres
+      register: pglogical_status
+
+    - name: Display subscription status on workers
       debug:
         var: pglogical_status.stdout_lines
