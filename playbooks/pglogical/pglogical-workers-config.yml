@@ -2,14 +2,14 @@
   hosts: worker_nodes
   become: yes
   tasks:
-    - name: Promote standby node to read-write mode
-      shell: "/usr/lib/postgresql/12/bin/pg_ctl promote -D /var/lib/postgresql/12/main"
-      become_user: postgres
-      ignore_errors: yes
+    # - name: Promote standby node to read-write mode
+    #   shell: "/usr/lib/postgresql/12/bin/pg_ctl promote -D /var/lib/postgresql/12/main"
+    #   become_user: postgres
+    #   ignore_errors: yes
 
-    - name: Wait for promotion to complete
-      pause:
-        seconds: 10
+    # - name: Wait for promotion to complete
+    #   pause:
+    #     seconds: 10
 
     - name: Check if node is already configured
       community.postgresql.postgresql_query:
@@ -43,14 +43,14 @@
         state: present
       become_user: postgres
 
-    - name: Revert standby node to recovery mode
-      shell: "/usr/lib/postgresql/12/bin/pg_ctl restart -D /var/lib/postgresql/12/main -m fast"
-      become_user: postgres
-      ignore_errors: yes
+    # - name: Revert standby node to recovery mode
+    #   shell: "/usr/lib/postgresql/12/bin/pg_ctl restart -D /var/lib/postgresql/12/main -m fast"
+    #   become_user: postgres
+    #   ignore_errors: yes
 
-    - name: Wait for PostgreSQL to start
-      pause:
-        seconds: 10
+    # - name: Wait for PostgreSQL to start
+    #   pause:
+    #     seconds: 10
 
     - name: Subscribe to primary node
       community.postgresql.postgresql_query:

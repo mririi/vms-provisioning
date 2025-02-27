@@ -81,18 +81,18 @@
         state: stopped
       ignore_errors: true
 
-    - name: Clone standby from master
-      shell: >
-        sudo -u postgres env PGPASSWORD={{ repmgr_password }}
-        repmgr
-        -h {{ master_private_ip }}
-        -p 6588
-        -U {{ repmgr_user }}
-        -d {{ repmgr_db }}
-        -f {{ repmgr_config_path }}
-        standby clone
-        {% if copy_ext_config | bool %} --copy-external-config-files {% endif %}
-        --force
+    # - name: Clone standby from master
+    #   shell: >
+    #     sudo -u postgres env PGPASSWORD={{ repmgr_password }}
+    #     repmgr
+    #     -h {{ master_private_ip }}
+    #     -p 6588
+    #     -U {{ repmgr_user }}
+    #     -d {{ repmgr_db }}
+    #     -f {{ repmgr_config_path }}
+    #     standby clone
+    #     {% if copy_ext_config | bool %} --copy-external-config-files {% endif %}
+    #     --force
 
     - name: Start PostgreSQL on standby
       systemd:
@@ -100,11 +100,11 @@
         state: started
         enabled: yes
 
-    - name: Register standby node with repmgr
-      shell: >
-        sudo -u postgres repmgr
-        -f {{ repmgr_config_path }}
-        standby register
-      register: standby_register
-      failed_when: "standby_register.rc not in [0,1]"
-      changed_when: standby_register.rc == 0
+    # - name: Register standby node with repmgr
+    #   shell: >
+    #     sudo -u postgres repmgr
+    #     -f {{ repmgr_config_path }}
+    #     standby register
+    #   register: standby_register
+    #   failed_when: "standby_register.rc not in [0,1]"
+    #   changed_when: standby_register.rc == 0

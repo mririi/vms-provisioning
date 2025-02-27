@@ -6,13 +6,6 @@
     - ../vars/repmgr.yml
     
   tasks:
-    - name: Install required Python libraries (Debian/Ubuntu)
-      apt:
-        name: python3-psycopg2
-        state: present
-        update_cache: yes
-      when: ansible_os_family == "Debian"
-
     - name: Create repmgr database
       community.postgresql.postgresql_db:
         name: "{{ repmgr_db }}"
@@ -145,11 +138,11 @@
         state: started
         enabled: yes
 
-    - name: Register master node with repmgr
-      shell: >
-        sudo -u postgres repmgr
-        -f {{ repmgr_config_path }}
-        primary register --force
-      register: primary_register
-      failed_when: "primary_register.rc not in [0,1]"
-      changed_when: primary_register.rc == 0
+    # - name: Register master node with repmgr
+    #   shell: >
+    #     sudo -u postgres repmgr
+    #     -f {{ repmgr_config_path }}
+    #     primary register --force
+    #   register: primary_register
+    #   failed_when: "primary_register.rc not in [0,1]"
+    #   changed_when: primary_register.rc == 0
