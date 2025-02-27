@@ -49,10 +49,10 @@
         login_port: 6588
       become_user: postgres
 
-    - name: Grant USAGE & SELECT on pglogical schema to pglogical_user
+    - name: Grant USAGE on pglogical schema to pglogical_user
       community.postgresql.postgresql_privs:
         db: pglogical_db
-        privs: "USAGE,SELECT"
+        privs: "USAGE"
         type: schema
         roles: pglogical_user
         objs: pglogical
@@ -66,7 +66,7 @@
         privs: "SELECT"
         type: table
         roles: pglogical_user
-        objs: pglogical.*
+        objs: "pglogical.*"
         login_port: 6588
         state: present
       become_user: postgres
