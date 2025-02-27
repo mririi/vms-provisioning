@@ -7,17 +7,9 @@
     #   become_user: postgres
     #   ignore_errors: yes
 
-    # - name: Wait for promotion to complete
-    #   pause:
-    #     seconds: 10
-
-    - name: Check if node is already configured
-      community.postgresql.postgresql_query:
-        db: pglogical_db
-        query: "SELECT node_name FROM pglogical.node WHERE node_name = '{{ ansible_hostname }}1';"
-        login_port: 6588
-      become_user: postgres
-      register: node_check
+    - name: Wait for promotion to complete
+      pause:
+        seconds: 10
 
     - name: Add standby node to pglogical
       community.postgresql.postgresql_query:
