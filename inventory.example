@@ -9,4 +9,5 @@ worker2 ansible_host=192.168.1.251 worker_private_ip=10.0.0.6 ansible_user=vagra
 master_private_ip=10.0.0.4
 worker1_private_ip=10.0.0.5
 worker2_private_ip=10.0.0.6
+pg_port=6588
 ansible_python_interpreter=/usr/bin/python3

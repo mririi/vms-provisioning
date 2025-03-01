@@ -10,14 +10,14 @@
       community.postgresql.postgresql_db:
         name: "{{ repmgr_db }}"
         state: present
-        login_port: 6588
+        login_port: "{{ pg_port }}"
       become_user: postgres
 
     - name: Create repmgr user
       community.postgresql.postgresql_user:
         name: "{{ repmgr_user }}"
         password: "{{ repmgr_password }}"
-        login_port: 6588
+        login_port: "{{ pg_port }}"
         db: "{{ repmgr_db }}"
         role_attr_flags: 'LOGIN,REPLICATION'
         state: present
@@ -26,7 +26,7 @@
     - name: Create repmgr extension
       community.postgresql.postgresql_query:
         db: "{{ repmgr_db }}"
-        login_port: 6588
+        login_port: "{{ pg_port }}"
         query: "CREATE EXTENSION IF NOT EXISTS repmgr;"
       become_user: postgres
 
@@ -37,7 +37,7 @@
         privs: "USAGE"
         type: schema
         roles: "{{ repmgr_user }}"
-        login_port: 6588
+        login_port: "{{ pg_port }}"
         state: present
       become_user: postgres
 
@@ -49,7 +49,7 @@
         type: table
         roles: "{{ repmgr_user }}"
         privs: "ALL"
-        login_port: 6588
+        login_port: "{{ pg_port }}"
         state: present
       become_user: postgres
 
@@ -61,7 +61,7 @@
         type: sequence
         roles: "{{ repmgr_user }}"
         privs: "ALL"
-        login_port: 6588
+        login_port: "{{ pg_port }}"
         state: present
       become_user: postgres
       
@@ -110,7 +110,7 @@
       vars:
         node_id: "{{ repmgr_node_id }}"
         node_name: "{{ repmgr_node_name }}"
-        conninfo: "host={{ master_private_ip }} dbname={{ repmgr_db }} user={{ repmgr_user }} password={{ repmgr_password }} port=6588"
+        conninfo: "host={{ master_private_ip }} dbname={{ repmgr_db }} user={{ repmgr_user }} password={{ repmgr_password }} port={{ pg_port }}"
         config_path_for_template: "{{ repmgr_config_path }}"
         service_name: "{{ repmgr_service_name }}"
 

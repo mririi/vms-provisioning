@@ -51,7 +51,7 @@
       vars:
         node_id: "{{ repmgr_node_id }}"
         node_name: "{{ repmgr_node_name }}"
-        conninfo: "host={{ worker_private_ip }} dbname={{ repmgr_db }} user={{ repmgr_user }} password={{ repmgr_password }} port=6588"
+        conninfo: "host={{ worker_private_ip }} dbname={{ repmgr_db }} user={{ repmgr_user }} password={{ repmgr_password }} port={{ pg_port }}"
         config_path_for_template: "{{ repmgr_config_path }}"
         service_name: "{{ repmgr_service_name }}"
 
@@ -66,12 +66,11 @@
         sudo -u postgres env PGPASSWORD={{ repmgr_password }}
         repmgr
         -h {{ master_private_ip }}
-        -p 6588
+        -p {{ pg_port }}
         -U {{ repmgr_user }}
         -d {{ repmgr_db }}
         -f {{ repmgr_config_path }}
         standby clone
-        {% if copy_ext_config | bool %} --copy-external-config-files {% endif %}
         --force
 
     - name: Start PostgreSQL on standby
