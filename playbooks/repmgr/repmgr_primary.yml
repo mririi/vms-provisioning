@@ -71,22 +71,6 @@
         regexp: '^#?listen_addresses\s*=\s*.*'
         line: "listen_addresses = '*'"
         backup: yes
-
-    - name: Ensure pglogical is in shared_preload_libraries
-      lineinfile:
-        path: /etc/postgresql/12/main/postgresql.conf
-        regexp: '^#?shared_preload_libraries\s*='
-        line: "shared_preload_libraries = 'pglogical'"
-        backup: yes
-
-    - name: Configure PostgreSQL settings for pglogical
-      blockinfile:
-        path: /etc/postgresql/12/main/postgresql.conf
-        block: |
-          wal_level = 'logical'
-          max_replication_slots = 10
-          max_wal_senders = 10
-          track_commit_timestamp = on
           
     - name: Restart PostgreSQL immediately
       systemd:
@@ -102,8 +86,6 @@
           host  replication       {{ repmgr_user }}  127.0.0.1/32  md5
           host {{ repmgr_db }}    {{ repmgr_user }}  {{ master_private_ip }}/24   md5
           host replication        {{ repmgr_user }}  {{ master_private_ip }}/24   md5
-          host    replication     pglogical_user    0.0.0.0/0     md5
-          host    all             pglogical_user    0.0.0.0/0     md5
           
     - name: Reload PostgreSQL
       systemd:
@@ -126,8 +108,8 @@
         group: postgres
         mode: '0644'
       vars:
-        node_id: "{{ repmgr_node_id }}"    # from inventory
-        node_name: "{{ repmgr_node_name }}" # from inventory
+        node_id: "{{ repmgr_node_id }}"
+        node_name: "{{ repmgr_node_name }}"
         conninfo: "host={{ master_private_ip }} dbname={{ repmgr_db }} user={{ repmgr_user }} password={{ repmgr_password }} port=6588"
         config_path_for_template: "{{ repmgr_config_path }}"
         service_name: "{{ repmgr_service_name }}"
@@ -138,11 +120,11 @@
         state: started
         enabled: yes
 
-    # - name: Register master node with repmgr
-    #   shell: >
-    #     sudo -u postgres repmgr
-    #     -f {{ repmgr_config_path }}
-    #     primary register --force
-    #   register: primary_register
-    #   failed_when: "primary_register.rc not in [0,1]"
-    #   changed_when: primary_register.rc == 0
+    - name: Register master node with repmgr
+      shell: >
+        sudo -u postgres repmgr
+        -f {{ repmgr_config_path }}
+        primary register --force
+      register: primary_register
+      failed_when: "primary_register.rc not in [0,1]"
+      changed_when: primary_register.rc == 0

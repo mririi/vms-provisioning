@@ -6,8 +6,3 @@ repmgr_service_name: "postgresql"
 network_subnet_master: "{{ master_private_ip }}/24"
 network_subnet_worker1: "{{ worker1_private_ip }}/24"
 network_subnet_worker2: "{{ worker2_private_ip }}/24"
-# We assume the master's IP is the first host in the master_nodes group
-master_host: "{{ hostvars[groups['master_nodes'][0]].ansible_host }}"
-# Set to true if you want to use --copy-external-config-files
-# (only if your repmgr version supports it and you keep config_directory)
-copy_ext_config: false
