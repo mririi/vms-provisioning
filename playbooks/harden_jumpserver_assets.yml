@@ -1,0 +1,54 @@
+---
+- name: Harden JumpServer Managed Assets
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure SSH settings are secure
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+        backup: yes
+      with_items:
+        - { regexp: "^PermitRootLogin", line: "PermitRootLogin no" }
+        - { regexp: "^PasswordAuthentication", line: "PasswordAuthentication no" }
+        - { regexp: "^Port", line: "Port 22" }
+        - { regexp: "^AllowUsers", line: "AllowUsers {{ansible_user}}@{{jumpserver_public_ip}}" }
+      notify: Restart SSH
+
+    - name: Allow SSH only from JumpServer IP
+      ufw:
+        rule: allow
+        src: "{{ jumpserver_ip }}"
+        port: "22"
+        proto: tcp
+
+    - name: Block all other SSH access
+      ufw:
+        rule: deny
+        port: "22"
+        proto: tcp
+
+    - name: Ensure UFW is enabled
+      ufw:
+        state: enabled
+
+    # 3. Enable Automatic Updates
+    - name: Install unattended-upgrades package (Debian/Ubuntu)
+      apt:
+        name: unattended-upgrades
+        state: present
+
+    - name: Enable automatic security updates (Debian/Ubuntu)
+      copy:
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        content: |
+          APT::Periodic::Update-Package-Lists "1";
+          APT::Periodic::Unattended-Upgrade "1";
+
+  handlers:
+    - name: Restart SSH
+      service:
+        name: ssh
+        state: restarted
