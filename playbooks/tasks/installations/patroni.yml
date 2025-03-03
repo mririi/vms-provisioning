@@ -1,24 +1,17 @@
 ---
-- name: Install Patroni and dependencies on Ubuntu (PostgreSQL 12)
-  hosts: all
-  become: yes
-  vars:
-    patroni_version: "2.1.1"
+- name: Update APT package cache
+  apt:
+    update_cache: yes
 
-  tasks:
-    - name: Update APT package cache
-      apt:
-        update_cache: yes
+- name: Install required packages
+  apt:
+    name:
+      - python3-pip
+      - etcd
+      - libpq-dev
+    state: present
 
-    - name: Install required packages
-      apt:
-        name:
-          - python3-pip
-          - etcd
-          - libpq-dev
-        state: present
-
-    - name: Install Patroni via pip3
-      pip:
-        name: "patroni=={{ patroni_version }}"
-        executable: pip3
+- name: Install Patroni via pip3
+  pip:
+    name: "patroni==2.1.1"
+    executable: pip3
