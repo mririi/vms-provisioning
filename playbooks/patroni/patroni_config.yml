@@ -8,12 +8,11 @@
     pg_data_dir: "/var/lib/postgresql/12/main"
     pg_bin_dir: "/usr/lib/postgresql/12/bin"
     etcd_host: "{{ master_private_ip }}:2379"
-    pg_port: "{{ pg_port }}"  # Dynamic port from inventory
 
   tasks:
     - name: Create Patroni configuration file
       template:
-        src: patroni.yml.j2
+        src: ../templates/patroni.yml.j2
         dest: "{{ patroni_config_path }}"
         owner: postgres
         group: postgres
