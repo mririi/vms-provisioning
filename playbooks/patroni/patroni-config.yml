@@ -1,0 +1,55 @@
+---
+- name: Configure Patroni for PostgreSQL 12 HA
+  hosts: all
+  become: yes
+  vars:
+    patroni_config_path: "/etc/patroni.yml"
+    patroni_service_file: "/etc/systemd/system/patroni.service"
+    pg_data_dir: "/var/lib/postgresql/12/main"
+    pg_bin_dir: "/usr/lib/postgresql/12/bin"
+    etcd_host: "{{ master_private_ip }}:2379"
+    pg_port: "{{ pg_port }}"  # Dynamic port from inventory
+
+  tasks:
+    - name: Create Patroni configuration file
+      template:
+        src: patroni.yml.j2
+        dest: "{{ patroni_config_path }}"
+        owner: postgres
+        group: postgres
+        mode: '0644'
+      notify: restart patroni
+
+    - name: Create systemd service for Patroni
+      copy:
+        dest: "{{ patroni_service_file }}"
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Patroni PostgreSQL High Availability Service
+          After=network.target etcd.service
+
+          [Service]
+          User=postgres
+          ExecStart=/usr/local/bin/patroni {{ patroni_config_path }}
+          Restart=on-failure
+          LimitNOFILE=1024
+
+          [Install]
+          WantedBy=multi-user.target
+      notify:
+        - reload systemd
+        - restart patroni
+
+  handlers:
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: restart patroni
+      systemd:
+        name: patroni
+        state: restarted
+        enabled: yes

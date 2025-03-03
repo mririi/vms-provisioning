@@ -1,0 +1,53 @@
+scope: postgres
+namespace: /db/
+name: {{ repmgr_node_name }}
+
+restapi:
+  listen: 0.0.0.0:8008
+  connect_address: {{ ansible_host }}:8008
+
+etcd:
+  host: {{ etcd_host }}
+
+bootstrap:
+  dcs:
+    ttl: 30
+    loop_wait: 10
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576
+    postgresql:
+      use_pg_rewind: true
+      parameters:
+        wal_level: replica
+        hot_standby: "on"
+        max_wal_senders: 10
+        wal_keep_size: 64
+        max_replication_slots: 10
+        archive_mode: "on"
+  initdb:
+    - encoding: UTF8
+    - data-checksums
+  pg_hba:
+    - host replication replicator 0.0.0.0/0 md5
+    - host all all 0.0.0.0/0 md5
+  users:
+    admin:
+      password: "admin_password"
+      options:
+        - createrole
+        - createdb
+
+postgresql:
+  listen: 0.0.0.0:{{ pg_port }}
+  connect_address: {{ ansible_host }}:{{ pg_port }}
+  data_dir: {{ pg_data_dir }}
+  bin_dir: {{ pg_bin_dir }}
+  authentication:
+    replication:
+      username: replicator
+      password: "replicator_password"
+    superuser:
+      username: postgres
+      password: "postgres_password"
+  parameters:
+    archive_command: 'cp %p /var/lib/postgresql/archive/%f'

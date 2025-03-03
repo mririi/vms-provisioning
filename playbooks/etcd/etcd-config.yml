@@ -1,0 +1,87 @@
+---
+- name: Install and Configure etcd on Master Node
+  hosts: master_nodes
+  become: yes
+  vars:
+    etcd_version: "3.5.7"  # Latest stable etcd version
+    etcd_data_dir: "/var/lib/etcd"
+    etcd_config_file: "/etc/default/etcd"
+
+  tasks:
+    - name: Install required dependencies
+      apt:
+        name:
+          - tar
+          - wget
+          - curl
+        state: present
+
+    - name: Download etcd binary
+      get_url:
+        url: "https://github.com/etcd-io/etcd/releases/download/v{{ etcd_version }}/etcd-v{{ etcd_version }}-linux-amd64.tar.gz"
+        dest: "/tmp/etcd.tar.gz"
+
+    - name: Extract and install etcd binaries
+      unarchive:
+        src: "/tmp/etcd.tar.gz"
+        dest: "/usr/local/bin/"
+        remote_src: yes
+        extra_opts: [ "--strip-components=1" ]
+
+    - name: Create etcd data directory
+      file:
+        path: "{{ etcd_data_dir }}"
+        state: directory
+        owner: etcd
+        group: etcd
+        mode: '0755'
+
+    - name: Configure etcd
+      copy:
+        dest: "{{ etcd_config_file }}"
+        content: |
+          ETCD_NAME="{{ inventory_hostname }}"
+          ETCD_DATA_DIR="{{ etcd_data_dir }}"
+          ETCD_LISTEN_PEER_URLS="http://{{ master_private_ip }}:2380"
+          ETCD_LISTEN_CLIENT_URLS="http://{{ master_private_ip }}:2379,http://127.0.0.1:2379"
+          ETCD_INITIAL_ADVERTISE_PEER_URLS="http://{{ master_private_ip }}:2380"
+          ETCD_ADVERTISE_CLIENT_URLS="http://{{ master_private_ip }}:2379"
+          ETCD_INITIAL_CLUSTER="master=http://{{ master_private_ip }}:2380"
+          ETCD_INITIAL_CLUSTER_STATE="new"
+          ETCD_INITIAL_CLUSTER_TOKEN="patroni-cluster"
+        owner: etcd
+        group: etcd
+        mode: '0644'
+
+    - name: Create systemd service for etcd
+      copy:
+        dest: "/etc/systemd/system/etcd.service"
+        content: |
+          [Unit]
+          Description=etcd key-value store
+          Documentation=https://github.com/coreos/etcd
+          After=network.target
+
+          [Service]
+          ExecStart=/usr/local/bin/etcd --config-file {{ etcd_config_file }}
+          Restart=always
+          User=etcd
+          Group=etcd
+          LimitNOFILE=65536
+
+          [Install]
+          WantedBy=multi-user.target
+      notify:
+        - reload systemd
+        - restart etcd
+
+  handlers:
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: restart etcd
+      systemd:
+        name: etcd
+        state: restarted
+        enabled: yes
