@@ -1,53 +1,36 @@
----
-- name: Configure Patroni for PostgreSQL 12 HA
-  hosts: all
+- name: Deploy PostgreSQL HA with Patroni using Kubernetes etcd
+  hosts: postgresql_nodes
   become: yes
   vars:
     patroni_config_path: "/etc/patroni.yml"
-    patroni_service_file: "/etc/systemd/system/patroni.service"
-    pg_data_dir: "/var/lib/postgresql/12/main"
-    pg_bin_dir: "/usr/lib/postgresql/12/bin"
+    pg_data_dir: "/var/lib/postgresql/14/main"
+    etcd_url: "http://etcd-service.kube-system.svc.cluster.local:2379"
+    cluster_name: "pg-cluster"
+    replication_user: "replicator"
+    replication_password: "replica_pass"
+    postgresql_admin_user: "postgres"
+    postgresql_admin_password: "secure_password"
 
   tasks:
     - name: Create Patroni configuration file
       template:
-        src: ../templates/patroni.yml.j2
+        src: patroni.yml.j2
         dest: "{{ patroni_config_path }}"
         owner: postgres
         group: postgres
-        mode: '0644'
-      notify: restart patroni
+        mode: 0644
 
-    - name: Create systemd service for Patroni
-      copy:
-        dest: "{{ patroni_service_file }}"
-        owner: root
-        group: root
-        mode: '0644'
-        content: |
-          [Unit]
-          Description=Patroni PostgreSQL High Availability Service
-          After=network.target etcd.service
-
-          [Service]
-          User=postgres
-          ExecStart=/usr/local/bin/patroni {{ patroni_config_path }}
-          Restart=on-failure
-          LimitNOFILE=1024
-
-          [Install]
-          WantedBy=multi-user.target
-      notify:
-        - reload systemd
-        - restart patroni
-
-  handlers:
-    - name: reload systemd
-      systemd:
-        daemon_reload: yes
-
-    - name: restart patroni
+    - name: Enable and restart Patroni service
       systemd:
         name: patroni
-        state: restarted
         enabled: yes
+        state: restarted
+
+    - name: Verify Patroni cluster status
+      shell: "patronictl -c /etc/patroni.yml list"
+      register: patroni_status
+      changed_when: false
+
+    - name: Display Patroni cluster status
+      debug:
+        msg: "{{ patroni_status.stdout }}"
