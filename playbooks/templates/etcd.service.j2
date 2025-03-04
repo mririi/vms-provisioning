@@ -5,7 +5,7 @@ After=network.target
 [Service]
 User=etcd
 Type=notify
-ExecStart=/usr/bin/etcd \
+ExecStart=/usr/local/bin/etcd \
   --name {{ inventory_hostname }} \
   --data-dir={{ etcd_data_dir }} \
   --listen-client-urls http://0.0.0.0:2380 \

@@ -4,7 +4,7 @@
   vars:
     etcd_data_dir: "/var/lib/etcd"
     etcd_cluster: "etcd-1=http://172.201.107.222:2380,etcd-2=http://9.163.96.39:2380,etcd-3=http://9.163.97.40:2380"
-    etcd_client_url: "http://172.201.107.222:2379,http://9.163.96.39:2379,http://9.163.97.40:2379"
+    etcd_client_url: "http://172.201.107.222:2380,http://9.163.96.39:2380,http://9.163.97.40:2380"
     patroni_config_path: "/etc/patroni.yml"
     pg_data_dir: "/var/lib/postgresql/12/main"
     cluster_name: "pg-cluster"
