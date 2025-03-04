@@ -14,13 +14,27 @@
     postgresql_admin_password: "secure_password"
 
   tasks:
-    - name: Install dependencies
-      apt:
-        name:
-          - etcd
-          - postgresql-12
-          - patroni
-        state: present
+    - name: Download etcd binary
+      get_url:
+        url: "https://github.com/etcd-io/etcd/releases/download/v3.5.9/etcd-v3.5.9-linux-amd64.tar.gz"
+        dest: "/tmp/etcd-v3.5.9-linux-amd64.tar.gz"
+
+    - name: Extract etcd
+      unarchive:
+        src: "/tmp/etcd-v3.5.9-linux-amd64.tar.gz"
+        dest: "/usr/local/bin/"
+        remote_src: yes
+        extra_opts: [ "--strip-components=1" ]
+
+    - name: Set permissions for etcd
+      file:
+        path: "/usr/local/bin/etcd"
+        mode: "0755"
+
+    - name: Set permissions for etcdctl
+      file:
+        path: "/usr/local/bin/etcdctl"
+        mode: "0755"
 
     - name: Configure etcd cluster
       template:
