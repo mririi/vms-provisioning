@@ -7,7 +7,7 @@ restapi:
   connect_address: "{{ ansible_default_ipv4.address }}:8008"
 
 etcd:
-  hosts: "{{ etcd_url }}"
+  hosts: ["{{ etcd_client_url }}"]
 
 bootstrap:
   dcs:
@@ -36,8 +36,8 @@ postgresql:
   listen: "{{ ansible_default_ipv4.address }}:5432"
   connect_address: "{{ ansible_default_ipv4.address }}:5432"
   data_dir: "{{ pg_data_dir }}"
-  bin_dir: "/usr/lib/postgresql/14/bin"
-  config_dir: "/etc/postgresql/14/main"
+  bin_dir: "/usr/lib/postgresql/12/bin"
+  config_dir: "/etc/postgresql/12/main"
   pgpass: "/tmp/pgpass"
   authentication:
     replication:

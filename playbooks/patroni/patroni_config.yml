@@ -1,10 +1,12 @@
-- name: Deploy PostgreSQL HA with Patroni using Kubernetes etcd
-  hosts: postgresql_nodes
+- name: Deploy Standalone etcd and Patroni Cluster
+  hosts: all
   become: yes
   vars:
+    etcd_data_dir: "/var/lib/etcd"
+    etcd_cluster: "etcd-1=http://172.201.107.222:2380,etcd-2=http://9.163.96.39:2380,etcd-3=http://9.163.97.40:2380"
+    etcd_client_url: "http://172.201.107.222:2379,http://9.163.96.39:2379,http://9.163.97.40:2379"
     patroni_config_path: "/etc/patroni.yml"
-    pg_data_dir: "/var/lib/postgresql/14/main"
-    etcd_url: "http://etcd-service.kube-system.svc.cluster.local:2379"
+    pg_data_dir: "/var/lib/postgresql/12/main"
     cluster_name: "pg-cluster"
     replication_user: "replicator"
     replication_password: "replica_pass"
@@ -12,25 +14,53 @@
     postgresql_admin_password: "secure_password"
 
   tasks:
+    - name: Install dependencies
+      apt:
+        name:
+          - etcd
+          - postgresql-12
+          - patroni
+        state: present
+
+    - name: Configure etcd cluster
+      template:
+        src: ../templates/etcd.service.j2
+        dest: "/etc/systemd/system/etcd.service"
+        owner: root
+        group: root
+        mode: 0644
+      when: "'etcd' in inventory_hostname"
+
+    - name: Enable and start etcd
+      systemd:
+        name: etcd
+        enabled: yes
+        state: restarted
+      when: "'etcd' in inventory_hostname"
+
     - name: Create Patroni configuration file
       template:
-        src: patroni.yml.j2
+        src: ../templates/patroni.yml.j2
         dest: "{{ patroni_config_path }}"
         owner: postgres
         group: postgres
         mode: 0644
+      when: "'pg' in inventory_hostname"
 
-    - name: Enable and restart Patroni service
+    - name: Enable and start Patroni
       systemd:
         name: patroni
         enabled: yes
         state: restarted
+      when: "'pg' in inventory_hostname"
 
     - name: Verify Patroni cluster status
       shell: "patronictl -c /etc/patroni.yml list"
       register: patroni_status
       changed_when: false
+      when: "'pg' in inventory_hostname"
 
-    - name: Display Patroni cluster status
+    - name: Display Patroni status
       debug:
         msg: "{{ patroni_status.stdout }}"
+      when: "'pg' in inventory_hostname"
