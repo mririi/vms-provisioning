@@ -43,14 +43,12 @@
         owner: root
         group: root
         mode: 0644
-      when: "'etcd' in inventory_hostname"
 
     - name: Enable and start etcd
       systemd:
         name: etcd
         enabled: yes
         state: restarted
-      when: "'etcd' in inventory_hostname"
 
     - name: Create Patroni configuration file
       template:
@@ -59,22 +57,18 @@
         owner: postgres
         group: postgres
         mode: 0644
-      when: "'pg' in inventory_hostname"
 
     - name: Enable and start Patroni
       systemd:
         name: patroni
         enabled: yes
         state: restarted
-      when: "'pg' in inventory_hostname"
 
     - name: Verify Patroni cluster status
       shell: "patronictl -c /etc/patroni.yml list"
       register: patroni_status
       changed_when: false
-      when: "'pg' in inventory_hostname"
 
     - name: Display Patroni status
       debug:
         msg: "{{ patroni_status.stdout }}"
-      when: "'pg' in inventory_hostname"
