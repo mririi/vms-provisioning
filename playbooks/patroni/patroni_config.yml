@@ -7,7 +7,6 @@
     patroni_service_file: "/etc/systemd/system/patroni.service"
     pg_data_dir: "/var/lib/postgresql/12/main"
     pg_bin_dir: "/usr/lib/postgresql/12/bin"
-    etcd_host: "{{ master_private_ip }}:2379"
 
   tasks:
     - name: Create Patroni configuration file

@@ -1,9 +1,6 @@
 ---
 - import_playbook: playbooks/tools_installation_playbook.yml
-- import_playbook: playbooks/etcd/etcd_config.yml
-- import_playbook: playbooks/patroni/patroni_config.yml
-# - import_playbook: playbooks/repmgr/repmgr_primary.yml
-# - import_playbook: playbooks/repmgr/repmgr_standby.yml
 - import_playbook: playbooks/kubernetes/kube-config-master.yml
 - import_playbook: playbooks/kubernetes/kube-join-worker.yml
-- import_playbook: playbooks/harden_jumpserver_assets.yml
+- import_playbook: playbooks/patroni/patroni_config.yml
+# - import_playbook: playbooks/harden_jumpserver_assets.yml

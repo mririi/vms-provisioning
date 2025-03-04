@@ -7,7 +7,10 @@ restapi:
   connect_address: {{ ansible_host }}:8008
 
 etcd:
-  host: {{ etcd_host }}
+  hosts: "https://127.0.0.1:2379"
+  ca: "/etc/kubernetes/pki/etcd/ca.crt"
+  cert: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
+  key: "/etc/kubernetes/pki/apiserver-etcd-client.key"
 
 bootstrap:
   dcs:
