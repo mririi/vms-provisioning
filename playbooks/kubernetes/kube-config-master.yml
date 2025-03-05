@@ -9,16 +9,35 @@
 
     - name: Initialize the Kubernetes cluster
       shell: |
-        kubeadm init --apiserver-advertise-address={{ master_private_ip }} --pod-network-cidr=10.244.0.0/16
+        kubeadm init --apiserver-advertise-address={{ ansible_host }} --pod-network-cidr=10.244.0.0/16
       register: kubeadm_init_output
 
     - name: Display kubeadm initialization output
       debug:
         msg: "{{ kubeadm_init_output.stdout }}"
 
+    - name: Copy join-command file to worker nodes
+      copy:
+        src: /tmp/kubeadm_join_cmd
+        dest: /tmp/kubeadm_join_cmd
+        mode: '0755'
+
+    - name: Read the last two lines of the kubeadm join command
+      shell: tail -n 2 /tmp/kubeadm_join_cmd | tr -d '\\\n'
+      register: kubeadm_join_cmd_raw
+      delegate_to: localhost  # Runs on Ansible control node
+
+    - name: Trim whitespace and join lines into a single command
+      set_fact:
+        kubeadm_join_cmd: "{{ kubeadm_join_cmd_raw.stdout_lines | join(' ') }}"
+
+    - name: Debug the extracted join command
+      debug:
+        msg: "{{ kubeadm_join_cmd }}"
+
     - name: Store Kubernetes initialization output to file
       copy:
-        content: "{{ kubeadm_init_output.stdout }}"
+        content: "{{ kubeadm_join_cmd_raw }}"
         dest: /tmp/kubeadm_join_cmd
       become: true
       delegate_to: localhost
