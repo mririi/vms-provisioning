@@ -16,30 +16,23 @@
       debug:
         msg: "{{ kubeadm_init_output.stdout }}"
 
-    - name: Copy join-command file to worker nodes
-      copy:
-        src: /tmp/kubeadm_join_cmd
-        dest: /tmp/kubeadm_join_cmd
-        mode: '0755'
-
-    - name: Read the last two lines of the kubeadm join command
-      shell: tail -n 2 /tmp/kubeadm_join_cmd | tr -d '\\\n'
+    - name: Extract kubeadm join command
+      shell: echo "{{ kubeadm_init_output.stdout }}" | grep -A 2 "kubeadm join" | tr -d '\\\n'
       register: kubeadm_join_cmd_raw
-      delegate_to: localhost  # Runs on Ansible control node
-
-    - name: Trim whitespace and join lines into a single command
+      
+    - name: Trim whitespace and set join command
       set_fact:
-        kubeadm_join_cmd: "{{ kubeadm_join_cmd_raw.stdout_lines | join(' ') }}"
+        kubeadm_join_cmd: "{{ kubeadm_join_cmd_raw.stdout | trim }}"
 
     - name: Debug the extracted join command
       debug:
         msg: "{{ kubeadm_join_cmd }}"
 
-    - name: Store Kubernetes initialization output to file
+    - name: Store Kubernetes join command to file
       copy:
-        content: "{{ kubeadm_join_cmd_raw }}"
+        content: "{{ kubeadm_join_cmd }}"
         dest: /tmp/kubeadm_join_cmd
-      become: true
+        mode: '0755'
       delegate_to: localhost
     
     - name: Ensure .kube directory exists
