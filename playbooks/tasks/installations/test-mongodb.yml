@@ -17,6 +17,12 @@
   debug:
     msg: "MongoDB écoute sur le port 27017"
 
+- name: Test MongoDB connection (without authentication)
+  command: 'mongo --quiet --eval "db.runCommand({ ping: 1 })"'
+  register: mongo_ping
+  failed_when: "'ok' not in mongo_ping.stdout"
+  changed_when: false
+
 
 - name: Afficher la réponse du ping
   debug:
