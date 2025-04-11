@@ -8,19 +8,20 @@
     msg: "mongod est actif: {{ mongod_status.status.ActiveState == 'active' }}"
 
 - name: Vérifier que le port 27017 est en écoute
-  shell: "ss -tuln | grep ':27017'"
+  shell: "ss -tuln | grep -q ':27017'"
   register: mongo_port_check
-  failed_when: "'27017' not in mongo_port_check.stdout"
+  failed_when: mongo_port_check.rc != 0
+  changed_when: false
 
 - name: Afficher le résultat du port
   debug:
-    msg: "MongoDB écoute sur le port 27017: {{ mongo_port_check.stdout }}"
+    msg: "MongoDB écoute sur le port 27017"
 
 - name: Tester la connexion à MongoDB (sans authentification)
-  shell: |
-    mongo --quiet --eval "db.runCommand({ ping: 1 })"
+  command: mongo --quiet --eval "db.runCommand({ ping: 1 })"
   register: mongo_ping
   failed_when: "'ok' not in mongo_ping.stdout"
+  changed_when: false
 
 - name: Afficher la réponse du ping
   debug:

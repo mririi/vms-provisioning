@@ -15,9 +15,11 @@
     state: present
     filename: mongodb-org
 
-- name: Install MongoDB
+- name: Install MongoDB and client shell
   apt:
-    name: mongodb-org
+    name:
+      - mongodb-org
+      - mongodb-org-shell
     state: present
     update_cache: yes
 
@@ -38,3 +40,9 @@
     name: mongod
     state: restarted
     enabled: yes
+
+- name: Test MongoDB connection (without authentication)
+  command: mongo --quiet --eval "db.runCommand({ ping: 1 })"
+  register: mongo_ping
+  failed_when: mongo_ping.rc != 0
+  changed_when: false
