@@ -1,0 +1,32 @@
+- name: Vérification du service MongoDB
+  hosts: mongo-server
+  become: yes
+  tasks:
+
+    - name: Vérifier que le service mongod est actif
+      systemd:
+        name: mongod
+      register: mongod_status
+
+    - name: Afficher l'état du service mongod
+      debug:
+        msg: "mongod est actif: {{ mongod_status.status.ActiveState == 'active' }}"
+
+    - name: Vérifier que le port 27017 est en écoute
+      shell: "ss -tuln | grep ':27017'"
+      register: mongo_port_check
+      failed_when: "'27017' not in mongo_port_check.stdout"
+
+    - name: Afficher le résultat du port
+      debug:
+        msg: "MongoDB écoute sur le port 27017: {{ mongo_port_check.stdout }}"
+
+    - name: Tester la connexion à MongoDB (sans authentification)
+      shell: |
+        mongo --quiet --eval "db.runCommand({ ping: 1 })"
+      register: mongo_ping
+      failed_when: "'ok' not in mongo_ping.stdout"
+
+    - name: Afficher la réponse du ping
+      debug:
+        var: mongo_ping.stdout

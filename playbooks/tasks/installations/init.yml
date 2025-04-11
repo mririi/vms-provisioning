@@ -3,3 +3,5 @@
   - include_tasks: ./kubernetes.yml
   - include_tasks: ./postgresql.yml
   - include_tasks: ./repmgr.yml
+  - include_tasks: ./mongodb.yml
+  - include_tasks: ./test-mongodb.yml
