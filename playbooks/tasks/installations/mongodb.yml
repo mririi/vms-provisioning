@@ -9,9 +9,9 @@
     url: https://pgp.mongodb.com/server-6.0.asc
     state: present
 
-- name: Add MongoDB repository
+- name: Add MongoDB repository (force jammy for noble)
   apt_repository:
-    repo: deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu {{ ansible_distribution_release }}/mongodb-org/6.0 multiverse
+    repo: deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse
     state: present
     filename: mongodb-org
 
