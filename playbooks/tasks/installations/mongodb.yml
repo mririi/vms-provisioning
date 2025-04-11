@@ -29,14 +29,36 @@
     state: started
     enabled: yes
 
-- name: Configure mongod.conf
+- name: Create MongoDB admin user (before enabling auth)
+  shell: |
+    mongosh --quiet --eval '
+      db.getSiblingDB("admin").createUser({
+        user: "admin",
+        pwd: "admin123",
+        roles: [ { role: "userAdminAnyDatabase", db: "admin" }, "readWriteAnyDatabase" ]
+      });
+    '
+  args:
+    creates: /var/lib/mongodb/.admin_created
+  register: mongo_user_creation
+  changed_when: "'already' not in mongo_user_creation.stdout"
+  failed_when: mongo_user_creation.rc != 0
+  notify: restart mongod
+
+- name: Mark admin created
+  file:
+    path: /var/lib/mongodb/.admin_created
+    state: touch
+
+- name: Configure mongod.conf with auth
   template:
     src: ../../templates/mongod.conf.j2
     dest: /etc/mongod.conf
     mode: '0644'
+  notify: restart mongod
 
-- name: Restart mongod after configuration change
+- name: restart mongod
   systemd:
     name: mongod
     state: restarted
-    enabled: yes
+  listen: restart mongod
