@@ -43,7 +43,12 @@
   register: mongo_user_creation
   changed_when: "'already' not in mongo_user_creation.stdout"
   failed_when: mongo_user_creation.rc != 0
-  notify: restart mongod
+
+- name: Restart mongod after configuration change
+  systemd:
+    name: mongod
+    state: restarted
+    enabled: yes
 
 - name: Mark admin created
   file:
@@ -55,10 +60,9 @@
     src: ../../templates/mongod.conf.j2
     dest: /etc/mongod.conf
     mode: '0644'
-  notify: restart mongod
 
-- name: restart mongod
+- name: Restart mongod after configuration change
   systemd:
     name: mongod
     state: restarted
-  listen: restart mongod
+    enabled: yes
