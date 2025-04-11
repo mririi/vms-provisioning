@@ -1,5 +1,6 @@
 ---
 - import_playbook: playbooks/tools_installation_playbook.yml
+- import_playbook: playbooks/tools_installation_master_only.yml
 - import_playbook: playbooks/repmgr/repmgr_primary.yml
 - import_playbook: playbooks/repmgr/repmgr_standby.yml
 - import_playbook: playbooks/kubernetes/kube-config-master.yml

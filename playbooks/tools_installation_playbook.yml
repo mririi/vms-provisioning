@@ -1,5 +1,5 @@
 ---
-- name: Ensure Docker is installed and running
+- name: Ensure tools are installed and running
   hosts: all
   become: yes
   tasks:
