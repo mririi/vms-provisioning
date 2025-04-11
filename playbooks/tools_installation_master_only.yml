@@ -3,4 +3,3 @@
   become: yes
   tasks:
     - include_tasks: tasks/installations/mongodb.yml
-    - include_tasks: tasks/installations/test-mongodb.yml

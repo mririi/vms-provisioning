@@ -15,11 +15,11 @@
     state: present
     filename: mongodb-org
 
-- name: Install MongoDB and client shell
+- name: Install MongoDB and mongosh shell
   apt:
     name:
       - mongodb-org
-      - mongodb-org-shell
+      - mongodb-mongosh
     state: present
     update_cache: yes
 
@@ -40,18 +40,3 @@
     name: mongod
     state: restarted
     enabled: yes
-
-# 🔍 Ajout de la détection du binaire mongo
-- name: Find mongo binary location
-  shell: "which mongo || find / -type f -name mongo 2>/dev/null | head -n 1"
-  register: mongo_path
-  changed_when: false
-
-# 🔗 Création du lien symbolique pour s'assurer que mongo est dans le PATH
-- name: Create symlink to mongo in /usr/local/bin if not already exists
-  file:
-    src: "{{ mongo_path.stdout }}"
-    dest: /usr/local/bin/mongo
-    state: link
-    force: yes
-  when: mongo_path.stdout != "" and mongo_path.stdout != "/usr/local/bin/mongo"
